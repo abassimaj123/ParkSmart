@@ -1,0 +1,68 @@
+name: mob_calc_portfolio
+repository: https://github.com/abassimaj123/mob
+
+packages:
+  # Shared library
+  - packages/calcwise_core
+
+  # Flutter Apps - Financial Calculators
+  - AutoLoan
+  - CreditCardAPR
+  - HELOCApp
+  - LoanPayoffUS
+  - StudentLoan
+  - SalaryApp
+
+  # Real Estate & Investment
+  - MortgageCA
+  - MortgageUK
+  - MortgageUS
+  - PropertyROISuite
+  - RentBuyUS
+  - RentalExpenses
+  - ParkSmart
+
+  # Utility
+  - JobOfferUS
+  - rideprofit
+  - icon_gen
+
+command:
+  clean:
+    hooks:
+      post: melos exec -- "flutter clean"
+  bootstrap:
+    hooks:
+      post: melos exec -- "flutter pub get"
+
+scripts:
+  analyze:
+    description: Analyze all packages
+    exec: flutter analyze
+    concurrency: 4
+
+  format:
+    description: Format all packages
+    exec: dart format .
+    concurrency: 4
+
+  test:
+    description: Run tests in all packages
+    exec: flutter test
+    concurrency: 1
+    packageFilters:
+      dirExists:
+        - test
+
+  build-debug:
+    description: Build APK in debug mode for all apps
+    exec: flutter build apk --debug
+    concurrency: 1
+
+  build-release:
+    description: Build AAB in release mode for all apps
+    exec: flutter build appbundle --release
+    concurrency: 1
+
+sdkPath: null
+ignorePackages: []

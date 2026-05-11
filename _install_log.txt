@@ -1,0 +1,421 @@
+=== Install session Wed May  6 08:43:53 EDT 2026 ===
+
+>>> Building LandlordCashFlow 
+3 warnings
+Running Gradle task 'assembleDebug'...                            180.3s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.landlord.cashflow.calculator
+adb.exe: no devices/emulators found
+
+>>> Building HELOCApp 
+3 warnings
+Running Gradle task 'assembleDebug'...                            206.7s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.heloc.us.calculator
+adb.exe: no devices/emulators found
+
+>>> Building RefinanceApp 
+3 warnings
+Running Gradle task 'assembleDebug'...                            137.4s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.refinance.us.calculator
+adb.exe: no devices/emulators found
+
+>>> Building RentBuyUS 
+3 warnings
+Running Gradle task 'assembleDebug'...                            218.6s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.rentbuy.us.calculator
+Signature mismatch — uninstalling first...
+Success
+Performing Streamed Install
+Success
+
+>>> Building SalaryApp (us)
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleUsDebug'...                           86.6s
+√ Built build\app\outputs\flutter-apk\app-us-debug.apk
+>>> Installing com.salary.us.calculator
+Performing Streamed Install
+Success
+
+>>> Building SalaryApp (uk)
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleUkDebug'...                           64.2s
+√ Built build\app\outputs\flutter-apk\app-uk-debug.apk
+>>> Installing com.salary.uk.calculator
+Performing Streamed Install
+Success
+
+>>> Building SalaryApp (ca)
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleCaDebug'...                           44.2s
+√ Built build\app\outputs\flutter-apk\app-ca-debug.apk
+>>> Installing com.salary.ca.calculator
+Performing Streamed Install
+Success
+
+>>> Building MortgageCA 
+3 warnings
+Running Gradle task 'assembleDebug'...                            136.6s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.mortgageca.calculator
+Signature mismatch — uninstalling first...
+Success
+Performing Streamed Install
+Success
+
+>>> Building MortgageUK 
+3 warnings
+Running Gradle task 'assembleDebug'...                            108.9s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.mortgageuk.calculator
+Signature mismatch — uninstalling first...
+Success
+Performing Streamed Install
+Success
+
+>>> Building MortgageExtraPayment 
+3 warnings
+Running Gradle task 'assembleDebug'...                            162.0s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.calqwise.mortgageextrapayment
+Signature mismatch — uninstalling first...
+Success
+Performing Streamed Install
+Success
+
+>>> Building BRRRRCalc 
+3 warnings
+Running Gradle task 'assembleDebug'...                            101.4s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.brrrr.us.calculator
+Signature mismatch — uninstalling first...
+Success
+Performing Streamed Install
+Success
+
+>>> Building CapRate 
+
+
+=== RESUME session Wed May  6 09:12:25 EDT 2026 ===
+=== RESUME session Wed May  6 09:12:25 EDT 2026 ===
+📱 Device: RFCX20661WW
+📱 Device: RFCX20661WW
+
+
+>>> Installing (pre-built) LandlordCashFlow (com.landlord.cashflow.calculator)
+>>> Installing (pre-built) LandlordCashFlow (com.landlord.cashflow.calculator)
+  Signature conflict — uninstalling first...
+  Signature conflict — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Installing (pre-built) HELOCApp (com.heloc.us.calculator)
+>>> Installing (pre-built) HELOCApp (com.heloc.us.calculator)
+  Signature conflict — uninstalling first...
+  Signature conflict — uninstalling first...
+Success
+Success
+3 warnings
+Running Gradle task 'assembleDebug'...                            100.3s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.caprate.us.calculator
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Installing (pre-built) RefinanceApp (com.refinance.us.calculator)
+>>> Installing (pre-built) RefinanceApp (com.refinance.us.calculator)
+Signature mismatch — uninstalling first...
+Success
+  Signature conflict — uninstalling first...
+  Signature conflict — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+
+>>> Building HouseFlip 
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Installing (pre-built) MortgageExtraPayment (com.calqwise.mortgageextrapayment)
+>>> Installing (pre-built) MortgageExtraPayment (com.calqwise.mortgageextrapayment)
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Installing (pre-built) BRRRRCalc (com.brrrr.us.calculator)
+>>> Installing (pre-built) BRRRRCalc (com.brrrr.us.calculator)
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Installing (pre-built) TaxeCA (com.taxeca.calculator)
+>>> Installing (pre-built) TaxeCA (com.taxeca.calculator)
+  Signature conflict — uninstalling first...
+  Signature conflict — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Installing (pre-built) TaxeUK (com.taxeuk.calculator)
+>>> Installing (pre-built) TaxeUK (com.taxeuk.calculator)
+  Signature conflict — uninstalling first...
+  Signature conflict — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Installing (pre-built) TaxUS (com.taxus.calculator)
+>>> Installing (pre-built) TaxUS (com.taxus.calculator)
+  Signature conflict — uninstalling first...
+  Signature conflict — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Building CapRate 
+>>> Building CapRate 
+3 warnings
+Running Gradle task 'assembleDebug'...                            135.9s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleDebug'...                            107.9s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleDebug'...                            107.9s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.caprate.us.calculator
+>>> Installing com.caprate.us.calculator
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Building HouseFlip 
+>>> Building HouseFlip 
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleDebug'...                             25.4s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleDebug'...                             25.4s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.houseflip.us.calculator
+>>> Installing com.houseflip.us.calculator
+Signature mismatch — uninstalling first...
+Signature mismatch — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Building PropertyROI 
+>>> Building PropertyROI 
+3 warnings
+Running Gradle task 'assembleDebug'...                            140.0s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+3 warnings
+Running Gradle task 'assembleDebug'...                            140.0s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.propertyroi.us.calculator
+>>> Installing com.propertyroi.us.calculator
+Signature mismatch — uninstalling first...
+Signature mismatch — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Building RentalROI 
+>>> Building RentalROI 
+3 warnings
+Running Gradle task 'assembleDebug'...                            115.5s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+3 warnings
+Running Gradle task 'assembleDebug'...                            115.5s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.rentalroi.us.calculator
+>>> Installing com.rentalroi.us.calculator
+Signature mismatch — uninstalling first...
+Signature mismatch — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Building AffordabilityUS 
+>>> Building AffordabilityUS 
+3 warnings
+Running Gradle task 'assembleDebug'...                            102.7s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+3 warnings
+Running Gradle task 'assembleDebug'...                            102.7s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.affordability.us.calculator
+>>> Installing com.affordability.us.calculator
+Signature mismatch — uninstalling first...
+Signature mismatch — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Building CreditCardAPR 
+>>> Building CreditCardAPR 
+BUILD FAILED in 20s
+Running Gradle task 'assembleDebug'...                             20.9s
+Gradle task assembleDebug failed with exit code 1
+BUILD FAILED in 20s
+Running Gradle task 'assembleDebug'...                             20.9s
+Gradle task assembleDebug failed with exit code 1
+FAILED: APK not found at build/app/outputs/flutter-apk/app-debug.apk
+FAILED: APK not found at build/app/outputs/flutter-apk/app-debug.apk
+
+
+>>> Building MortgageUS 
+>>> Building MortgageUS 
+3 warnings
+Running Gradle task 'assembleDebug'...                            112.1s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+3 warnings
+Running Gradle task 'assembleDebug'...                            112.1s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.mortgageus.calculator
+>>> Installing com.mortgageus.calculator
+Signature mismatch — uninstalling first...
+Signature mismatch — uninstalling first...
+Success
+Success
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+
+
+>>> Building LoanPayoffUS 
+>>> Building LoanPayoffUS 
+3 warnings
+Running Gradle task 'assembleDebug'...                            108.9s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+3 warnings
+Running Gradle task 'assembleDebug'...                            108.9s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.loanpayoff.us.calculator
+>>> Installing com.loanpayoff.us.calculator
+adb.exe: device 'RFCX20661WW' not found
+adb.exe: device 'RFCX20661WW' not found
+
+
+>>> Building StudentLoan 
+>>> Building StudentLoan 
+3 warnings
+Running Gradle task 'assembleDebug'...                             90.0s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+3 warnings
+Running Gradle task 'assembleDebug'...                             90.0s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.studentloan.us.calculator
+>>> Installing com.studentloan.us.calculator
+adb.exe: device 'RFCX20661WW' not found
+adb.exe: device 'RFCX20661WW' not found
+
+
+>>> Building RentalExpenses 
+>>> Building RentalExpenses 
+3 warnings
+Running Gradle task 'assembleDebug'...                             94.7s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+3 warnings
+Running Gradle task 'assembleDebug'...                             94.7s
+√ Built build\app\outputs\flutter-apk\app-debug.apk
+>>> Installing com.rentalexpenses.us.calculator
+>>> Installing com.rentalexpenses.us.calculator
+adb.exe: device 'RFCX20661WW' not found
+adb.exe: device 'RFCX20661WW' not found
+
+
+>>> Building AutoLoan (ca)
+>>> Building AutoLoan (ca)
+3 warnings
+Running Gradle task 'assembleCaDebug'...                          112.9s
+√ Built build\app\outputs\flutter-apk\app-ca-debug.apk
+3 warnings
+Running Gradle task 'assembleCaDebug'...                          112.9s
+√ Built build\app\outputs\flutter-apk\app-ca-debug.apk
+>>> Installing com.autoloan.ca.calculator
+>>> Installing com.autoloan.ca.calculator
+adb.exe: device 'RFCX20661WW' not found
+adb.exe: device 'RFCX20661WW' not found
+
+
+>>> Building AutoLoan (us)
+>>> Building AutoLoan (us)
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleUsDebug'...                           68.7s
+√ Built build\app\outputs\flutter-apk\app-us-debug.apk
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleUsDebug'...                           68.7s
+√ Built build\app\outputs\flutter-apk\app-us-debug.apk
+>>> Installing com.autoloan.us.calculator
+>>> Installing com.autoloan.us.calculator
+adb.exe: device 'RFCX20661WW' not found
+adb.exe: device 'RFCX20661WW' not found
+
+
+>>> Building AutoLoan (uk)
+>>> Building AutoLoan (uk)
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleUkDebug'...                           82.3s
+√ Built build\app\outputs\flutter-apk\app-uk-debug.apk
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleUkDebug'...                           82.3s
+√ Built build\app\outputs\flutter-apk\app-uk-debug.apk
+>>> Installing com.autoloan.uk.calculator
+>>> Installing com.autoloan.uk.calculator
+adb.exe: device 'RFCX20661WW' not found
+adb.exe: device 'RFCX20661WW' not found
+
+
+=== RESUME DONE Wed May  6 09:36:29 EDT 2026 ===
+=== RESUME DONE Wed May  6 09:36:29 EDT 2026 ===
