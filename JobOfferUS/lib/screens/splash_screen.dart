@@ -1,0 +1,38 @@
+import 'package:flutter/material.dart';
+import 'package:calcwise_core/calcwise_core.dart';
+import '../core/theme/app_theme.dart';
+import 'home_screen.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Analytics logged via _initBackground in main.dart
+  }
+
+  @override
+  Widget build(BuildContext context) => CalcwiseSplash(
+    appName:     'Job Offer',
+    appSuffix:   'US',
+    tagline:     'Compare offers with confidence',
+    chips:       const ['Net Salary', 'Benefits', 'RSUs'],
+    badgeSymbol: r'J$',
+    badgeIcon: Icons.work_rounded,
+    backgroundColor: AppTheme.primary,
+    onComplete: () {
+      Navigator.of(context).pushReplacement(PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 500),
+        pageBuilder: (_, __, ___) => const HomeScreen(),
+        transitionsBuilder: (_, a, __, child) =>
+            FadeTransition(opacity: a, child: child),
+      ));
+    },
+  );
+}
