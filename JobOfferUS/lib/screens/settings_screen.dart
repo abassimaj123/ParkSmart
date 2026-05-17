@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/language/language_notifier.dart';
+import '../core/freemium/iap_service.dart';
 import '../core/theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -92,6 +93,13 @@ class SettingsScreen extends StatelessWidget {
                   const Divider(height: 1),
                   CalcwiseRateAppTile(
                       label: isSp ? 'Calificar la app' : 'Rate the App'),
+                  const Divider(height: 1),
+                  const Divider(height: 1),
+                  _Tile(
+                    icon: Icons.restore_rounded,
+                    label: isSp ? 'Restaurar compra' : 'Restore Purchase',
+                    onTap: () => IAPService.instance.restore(),
+                  ),
                   const Divider(height: 1),
                   _Tile(
                     icon: Icons.email_rounded,

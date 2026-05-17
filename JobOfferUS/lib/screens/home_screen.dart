@@ -42,14 +42,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    iapErrorNotifier.addListener(_onIapError);
     WidgetsBinding.instance.addPostFrameCallback(
         (_) async => await paywallSession.recordSession());
   }
 
   @override
   void dispose() {
+    iapErrorNotifier.removeListener(_onIapError);
     _debounce?.cancel();
     super.dispose();
+  }
+
+  void _onIapError() {
+    final msg = iapErrorNotifier.value;
+    if (msg == null || !mounted) return;
+    showIapErrorSnackBar(context, msg);
+    iapErrorNotifier.value = null;
   }
 
   void _debouncedCompare() {
