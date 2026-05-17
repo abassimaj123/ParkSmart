@@ -4,6 +4,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/foundation.dart';
 import 'freemium_service.dart';
 import 'analytics_service.dart';
+import 'review_service.dart';
 
 /// Per-app ad unit IDs.  Create one instance and pass it to [CalcwiseAdService].
 ///
@@ -120,6 +121,34 @@ class CalcwiseAdService {
 
   @Deprecated('Use onAction() instead — onCalculation() will be removed in v2.0')
   void onCalculation() => onAction();
+
+  /// Call when the user saves a calculation result.
+  /// Combines [onAction] (interstitial throttle) + review request after threshold.
+  void onSave() {
+    onAction();
+    CalcwiseReviewService.instance.requestAfterSave();
+  }
+
+  // ── Interstitial on-demand ────────────────────────────────────────────────
+
+  /// Show an interstitial immediately (bypassing action threshold), then
+  /// invoke [onDone] after dismissal or if no ad is available.
+  /// Useful for "navigate after ad" patterns.
+  void showInterstitialThen(void Function() onDone) {
+    if (freemium.isPremium || freemium.isRewarded) { onDone(); return; }
+    if (_inter == null) { onDone(); return; }
+    _lastInterTime = DateTime.now();
+    _actionCount   = 0;
+    _inter!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose(); _inter = null; _loadInter(); onDone();
+      },
+      onAdFailedToShowFullScreenContent: (ad, _) {
+        ad.dispose(); _inter = null; _loadInter(); onDone();
+      },
+    );
+    _inter!.show();
+  }
 
   // ── Rewarded ──────────────────────────────────────────────────────────────
 

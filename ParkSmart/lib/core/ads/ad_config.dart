@@ -5,11 +5,14 @@ class AdConfig {
 
   // Android IDs
   static const bannerAndroid = 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
-  static const interstitialAndroid = 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
-  static const rewardedAndroid = 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
+  static const interstitialAndroid =
+      'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
+  static const rewardedAndroid =
+      'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
 
   // iOS IDs
   static const banneriOS = 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
-  static const interstitialiOS = 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
+  static const interstitialiOS =
+      'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
   static const rewardediOS = 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy'; // TEST
 }

@@ -1,4 +1,5 @@
 import 'package:calcwise_core/calcwise_core.dart';
+import '../core/ads/ad_footer.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,8 +31,9 @@ class SettingsScreen extends StatelessWidget {
           appBar: AppBar(
             title: Text(isSp ? 'Ajustes' : 'Settings'),
           ),
+          bottomNavigationBar: const AdFooter(),
           body: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               // ── Language ──────────────────────────────────────
               _SectionHeader(isSp ? 'Idioma' : 'Language'),
@@ -64,12 +66,14 @@ class SettingsScreen extends StatelessWidget {
                     final ct = CalcwiseTheme.of(context);
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Icon(themeModeService.icon, color: AppTheme.primary),
+                      leading:
+                          Icon(themeModeService.icon, color: AppTheme.primary),
                       title: Text(
                         themeModeService.label(isSpanish: isSp),
                         style: TextStyle(color: ct.textPrimary),
                       ),
-                      trailing: Icon(Icons.chevron_right, color: ct.textSecondary),
+                      trailing: Icon(Icons.chevron_right_rounded,
+                          color: ct.textSecondary),
                       onTap: () => themeModeService.toggle(),
                     );
                   },
@@ -81,21 +85,26 @@ class SettingsScreen extends StatelessWidget {
               _Card(
                 child: Column(children: [
                   _Tile(
-                    icon: Icons.privacy_tip_outlined,
+                    icon: Icons.privacy_tip_rounded,
                     label: isSp ? 'Política de privacidad' : 'Privacy Policy',
                     onTap: () => _launch('https://calqwise.com/privacy'),
                   ),
                   const Divider(height: 1),
+                  CalcwiseRateAppTile(
+                      label: isSp ? 'Calificar la app' : 'Rate the App'),
+                  const Divider(height: 1),
                   _Tile(
-                    icon: Icons.email_outlined,
+                    icon: Icons.email_rounded,
                     label: isSp ? 'Soporte' : 'Contact Support',
                     onTap: () => _launch('mailto:support@calqwise.com'),
                   ),
                   const Divider(height: 1),
                   _Tile(
-                    icon: Icons.apps_outlined,
-                    label: isSp ? 'Más apps de CalqWise' : 'More apps by CalqWise',
-                    onTap: () => _launch('https://play.google.com/store/apps/developer?id=CalqWise'),
+                    icon: Icons.apps_rounded,
+                    label:
+                        isSp ? 'Más apps de CalqWise' : 'More apps by CalqWise',
+                    onTap: () => _launch(
+                        'https://play.google.com/store/apps/developer?id=CalqWise'),
                   ),
                 ]),
               ),
@@ -119,7 +128,7 @@ class _SectionHeader extends StatelessWidget {
         title.toUpperCase(),
         style: TextStyle(
           color: Theme.of(context).colorScheme.primary,
-          fontSize: 11,
+          fontSize: AppTextSize.xs,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
         ),
@@ -136,10 +145,10 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: child,
     );
@@ -150,7 +159,8 @@ class _LangChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _LangChip({required this.label, required this.selected, required this.onTap});
+  const _LangChip(
+      {required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +172,7 @@ class _LangChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: selected ? AppTheme.primary : ct.surfaceHigh,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.mdPlus),
           border: Border.all(
             color: selected ? AppTheme.primary : ct.cardBorder,
           ),
@@ -173,7 +183,7 @@ class _LangChip extends StatelessWidget {
           style: TextStyle(
             color: selected ? Colors.white : ct.textSecondary,
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: AppTextSize.body,
           ),
         ),
       ),
@@ -193,8 +203,9 @@ class _Tile extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: AppTheme.primary, size: 22),
-      title: Text(label, style: TextStyle(color: ct.textPrimary, fontSize: 14)),
-      trailing: Icon(Icons.chevron_right, color: ct.textSecondary),
+      title: Text(label,
+          style: TextStyle(color: ct.textPrimary, fontSize: AppTextSize.body)),
+      trailing: Icon(Icons.chevron_right_rounded, color: ct.textSecondary),
       onTap: onTap,
     );
   }

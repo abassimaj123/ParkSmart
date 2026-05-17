@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
+import 'package:calcwise_core/calcwise_core.dart';
 
 class SearchBarWidget extends StatefulWidget {
   final Function(String query) onSearch;
@@ -52,28 +53,28 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
       ),
       child: Row(
         children: [
-          const SizedBox(width: 16),
-          Icon(
-            Icons.search,
-            color: const Color(0xFF475569),
+          const SizedBox(width: AppSpacing.lg),
+          const Icon(
+            Icons.search_rounded,
+            color: Color(0xFF475569),
             size: 22,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: TextField(
               controller: _controller,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Chercher une adresse…',
                 hintStyle: TextStyle(
                   color: Color(0xFF94A3B8),
-                  fontSize: 15,
+                  fontSize: AppTextSize.bodyMd,
                 ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: AppTextSize.bodyMd,
                 color: AppTheme.primary,
                 fontWeight: FontWeight.w500,
               ),
@@ -91,17 +92,17 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 _controller.clear();
                 widget.onClear?.call();
               },
-              child: Padding(
-                padding: const EdgeInsets.all(12),
+              child: const Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
                 child: Icon(
-                  Icons.close,
-                  color: const Color(0xFF64748B),
+                  Icons.close_rounded,
+                  color: Color(0xFF64748B),
                   size: 18,
                 ),
               ),
             )
           else
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.lg),
         ],
       ),
     );

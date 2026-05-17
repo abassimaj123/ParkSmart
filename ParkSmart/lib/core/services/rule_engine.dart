@@ -43,10 +43,10 @@ class RuleResult {
 }
 
 class RuleEngine {
-  static const String colorFree       = '#00C853'; // 🟢
-  static const String colorMeter      = '#1565C0'; // 🔵
+  static const String colorFree = '#00C853'; // 🟢
+  static const String colorMeter = '#1565C0'; // 🔵
   static const String colorRestricted = '#D32F2F'; // 🔴
-  static const String colorNoData     = '#9E9E9E'; // ⬜ (non affiché)
+  static const String colorNoData = '#9E9E9E'; // ⬜ (non affiché)
 
   // ── Évaluation segment mock complet (avec nextChange) ───────────────────
 
@@ -76,7 +76,7 @@ class RuleEngine {
     if (segment.rules.isEmpty) return null;
     final current = _colorOnly(segment.rules, dt);
     DateTime check = dt.add(const Duration(minutes: 1));
-    final limit   = dt.add(const Duration(hours: 24));
+    final limit = dt.add(const Duration(hours: 24));
     while (check.isBefore(limit)) {
       if (_colorOnly(segment.rules, check) != current) return check;
       check = check.add(const Duration(minutes: 1));
@@ -102,23 +102,32 @@ class RuleEngine {
 
   static _Match _findActive(List<ParkingRule> rules, DateTime dt) {
     ParkingRule? noParking;
-    ParkingRule? permit;     // permitOnly  → restricted
-    ParkingRule? limited;    // permitOrLimit → free (2h autorisé)
+    ParkingRule? permit; // permitOnly  → restricted
+    ParkingRule? limited; // permitOrLimit → free (2h autorisé)
     ParkingRule? meter;
     ParkingRule? free;
 
     for (final r in rules) {
       if (!r.appliesAt(dt)) continue;
       switch (r.type) {
-        case RuleType.noParking:    noParking ??= r;
-        case RuleType.permitOnly:   permit    ??= r;
-        case RuleType.permitOrLimit: limited  ??= r;
-        case RuleType.meter:        meter     ??= r;
-        case RuleType.free:         free      ??= r;
+        case RuleType.noParking:
+          noParking ??= r;
+        case RuleType.permitOnly:
+          permit ??= r;
+        case RuleType.permitOrLimit:
+          limited ??= r;
+        case RuleType.meter:
+          meter ??= r;
+        case RuleType.free:
+          free ??= r;
       }
     }
-    return _Match(noParking: noParking, permit: permit,
-                  limited: limited, meter: meter, free: free);
+    return _Match(
+        noParking: noParking,
+        permit: permit,
+        limited: limited,
+        meter: meter,
+        free: free);
   }
 
   static RuleResult _toResult(_Match m) {
@@ -176,10 +185,14 @@ class RuleEngine {
 
   static String colorHexForColor(ParkingColor color) {
     switch (color) {
-      case ParkingColor.free:       return colorFree;
-      case ParkingColor.meter:      return colorMeter;
-      case ParkingColor.restricted: return colorRestricted;
-      case ParkingColor.noData:     return colorNoData;
+      case ParkingColor.free:
+        return colorFree;
+      case ParkingColor.meter:
+        return colorMeter;
+      case ParkingColor.restricted:
+        return colorRestricted;
+      case ParkingColor.noData:
+        return colorNoData;
     }
   }
 }
@@ -190,5 +203,6 @@ class _Match {
   final ParkingRule? limited;
   final ParkingRule? meter;
   final ParkingRule? free;
-  const _Match({this.noParking, this.permit, this.limited, this.meter, this.free});
+  const _Match(
+      {this.noParking, this.permit, this.limited, this.meter, this.free});
 }

@@ -12,7 +12,10 @@ void main() {
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [],
         confidence: 0.9,
         sourceDate: '2026-01-01',
@@ -28,7 +31,10 @@ void main() {
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -52,7 +58,10 @@ void main() {
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -76,7 +85,10 @@ void main() {
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.meter,
@@ -102,7 +114,10 @@ void main() {
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -132,7 +147,10 @@ void main() {
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.permitOnly,
@@ -160,7 +178,10 @@ void main() {
         streetName: 'Winter Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -185,7 +206,10 @@ void main() {
         streetName: 'Winter Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -210,7 +234,10 @@ void main() {
         streetName: 'Winter Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -245,7 +272,10 @@ void main() {
         streetName: 'Odd Street',
         city: 'Montréal',
         side: 'Nord',
-        coordinates: [[-73.5, 45.5], [-73.49, 45.5]],
+        coordinates: [
+          [-73.5, 45.5],
+          [-73.49, 45.5]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -272,7 +302,10 @@ void main() {
         streetName: 'Odd Month Street',
         city: 'Montréal',
         side: 'Sud',
-        coordinates: [[-73.5, 45.5], [-73.49, 45.5]],
+        coordinates: [
+          [-73.5, 45.5],
+          [-73.49, 45.5]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -309,7 +342,10 @@ void main() {
         streetName: 'Holiday Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.meter,
@@ -336,7 +372,10 @@ void main() {
         streetName: 'Permit Limited Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.permitOrLimit,
@@ -359,7 +398,10 @@ void main() {
         streetName: 'Permit Priority Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.permitOnly,
@@ -418,7 +460,10 @@ void main() {
         streetName: 'Conflict Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.free,
@@ -455,7 +500,10 @@ void main() {
         streetName: 'Weekday Only Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,
@@ -485,7 +533,10 @@ void main() {
         streetName: 'Midnight Street',
         city: 'Québec',
         side: 'Nord',
-        coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
+        coordinates: [
+          [-71.22, 46.81],
+          [-71.21, 46.81]
+        ],
         rules: [
           ParkingRule(
             type: RuleType.noParking,

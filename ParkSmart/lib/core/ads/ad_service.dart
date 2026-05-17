@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'ad_config.dart';
-import '../freemium/freemium_service.dart';
+import '../services/freemium_service.dart';
 
 class AdService {
   static final instance = AdService._();
@@ -25,8 +26,9 @@ class AdService {
   }
 
   void _loadInter() {
-    final id =
-        Platform.isIOS ? AdConfig.interstitialiOS : AdConfig.interstitialAndroid;
+    final id = Platform.isIOS
+        ? AdConfig.interstitialiOS
+        : AdConfig.interstitialAndroid;
     InterstitialAd.load(
       adUnitId: id,
       request: const AdRequest(),
@@ -80,7 +82,7 @@ class AdService {
 
     _rewarded!.show(onUserEarnedReward: (_, __) {
       onRewarded();
-      freemiumService.unlockRewardedSession();
+      freemiumService.activateRewarded();
     });
   }
 

@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/parking_session.dart';
 import '../models/street_segment.dart';
-import '../models/parking_rule.dart';
 import '../services/rule_engine.dart';
+import '../services/parking_notification_service.dart';
 
 class SessionService extends ChangeNotifier {
   ParkingSession? _activeSession;
@@ -23,6 +23,12 @@ class SessionService extends ChangeNotifier {
       maxMinutes: maxMins,
     );
 
+    // Schedule parking notifications
+    ParkingNotificationService.instance.startSession(
+      segment.streetName,
+      maxMins,
+    );
+
     // Tick every 30 seconds to refresh UI
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -36,6 +42,10 @@ class SessionService extends ChangeNotifier {
     _activeSession = null;
     _ticker?.cancel();
     _ticker = null;
+
+    // Cancel any pending parking notifications
+    ParkingNotificationService.instance.cancelSession();
+
     notifyListeners();
   }
 

@@ -16,6 +16,8 @@ import '../models/street_segment.dart';
 /// ## Source
 ///   https://donnees.montreal.ca/dataset/nettoyage-rue
 ///   Données ouvertes MTL · Mise à jour annuelle
+@Deprecated(
+    'Use CityParkingService instead. Will be removed after Phase 0 validation.')
 class NettoyageService {
   static final NettoyageService _instance = NettoyageService._();
   factory NettoyageService() => _instance;
@@ -26,13 +28,13 @@ class NettoyageService {
   bool _loaded = false;
 
   // Grille 0.001° (~100 m), seuil ~80 m
-  static const double _cell    = 0.001;
+  static const double _cell = 0.001;
   static const double _thresh2 = 5.0e-7;
 
   Future<void> load() async {
     if (_loaded) return;
     try {
-      final raw  = await rootBundle.loadString('assets/nettoyage_montreal.json');
+      final raw = await rootBundle.loadString('assets/nettoyage_montreal.json');
       final data = jsonDecode(raw) as List<dynamic>;
 
       for (final item in data) {
@@ -58,7 +60,7 @@ class NettoyageService {
     final gi = (lat / _cell).floor();
     final gj = (lon / _cell).floor();
 
-    int?   bestIdx;
+    int? bestIdx;
     double bestD2 = double.infinity;
 
     for (int di = -1; di <= 1; di++) {
@@ -70,30 +72,33 @@ class NettoyageService {
             final dl = pt[1] - lat;
             final dx = pt[0] - lon;
             final d2 = dl * dl + dx * dx;
-            if (d2 < bestD2) { bestD2 = d2; bestIdx = idx; }
+            if (d2 < bestD2) {
+              bestD2 = d2;
+              bestIdx = idx;
+            }
           }
         }
       }
     }
 
     if (bestIdx == null || bestD2 > _thresh2) return null;
-    return _segs[bestIdx!].toSegment();
+    return _segs[bestIdx].toSegment();
   }
 
   static String _cellKey(double lat, double lon) =>
       '${(lat / _cell).floor()},${(lon / _cell).floor()}';
 
-  int  get segmentCount => _segs.length;
-  bool get isLoaded     => _loaded;
+  int get segmentCount => _segs.length;
+  bool get isLoaded => _loaded;
 }
 
 // ── Modèle interne ─────────────────────────────────────────────────────────
 
 class _NettSeg {
   final String name;
-  final int    wayId;
+  final int wayId;
   final String zone;
-  final String side;          // 'pair' | 'impair' | 'les deux'
+  final String side; // 'pair' | 'impair' | 'les deux'
   final List<List<double>> coords;
   final List<_NettRule> rules;
 
@@ -107,40 +112,41 @@ class _NettSeg {
   });
 
   factory _NettSeg.fromJson(Map<String, dynamic> j) => _NettSeg(
-    name:   j['n'] as String,
-    wayId:  j['w'] as int,
-    zone:   j['z'] as String,
-    side:   j['s'] as String,
-    coords: (j['c'] as List<dynamic>)
-        .map((p) => (p as List<dynamic>).map((v) => (v as num).toDouble()).toList())
-        .toList(),
-    rules: (j['r'] as List<dynamic>)
-        .map((r) => _NettRule.fromJson(r as Map<String, dynamic>))
-        .toList(),
-  );
+        name: j['n'] as String,
+        wayId: j['w'] as int,
+        zone: j['z'] as String,
+        side: j['s'] as String,
+        coords: (j['c'] as List<dynamic>)
+            .map((p) =>
+                (p as List<dynamic>).map((v) => (v as num).toDouble()).toList())
+            .toList(),
+        rules: (j['r'] as List<dynamic>)
+            .map((r) => _NettRule.fromJson(r as Map<String, dynamic>))
+            .toList(),
+      );
 
   StreetSegment toSegment() => StreetSegment(
-    id:          'nett-$wayId',
-    streetName:  name,
-    city:        'Montreal',
-    side:        side,
-    osmWayIds:   [wayId],
-    coordinates: coords,
-    rules:       rules.map((r) => r.toParkingRule()).toList(),
-    confidence:  0.85,
-    sourceDate:  '2026-01-01',
-    sources:     [DataSource.bylaw],
-    notes:       'Nettoyage des rues — $zone ($side)',
-  );
+        id: 'nett-$wayId',
+        streetName: name,
+        city: 'Montreal',
+        side: side,
+        osmWayIds: [wayId],
+        coordinates: coords,
+        rules: rules.map((r) => r.toParkingRule()).toList(),
+        confidence: 0.85,
+        sourceDate: '2026-01-01',
+        sources: [DataSource.bylaw],
+        notes: 'Nettoyage des rues — $zone ($side)',
+      );
 }
 
 class _NettRule {
-  final List<int> days;        // 1=Lun … 7=Dim
-  final String    from;        // 'HH:MM'
-  final String    to;          // 'HH:MM'
-  final int?      monthFrom;
-  final int?      monthTo;
-  final int?      dayParity;   // 0=pair 1=impair null=tous
+  final List<int> days; // 1=Lun … 7=Dim
+  final String from; // 'HH:MM'
+  final String to; // 'HH:MM'
+  final int? monthFrom;
+  final int? monthTo;
+  final int? dayParity; // 0=pair 1=impair null=tous
 
   const _NettRule({
     required this.days,
@@ -152,22 +158,22 @@ class _NettRule {
   });
 
   factory _NettRule.fromJson(Map<String, dynamic> j) => _NettRule(
-    days:      (j['d'] as List<dynamic>).map((v) => v as int).toList(),
-    from:      j['f'] as String,
-    to:        j['t'] as String,
-    monthFrom: j['mf'] as int?,
-    monthTo:   j['mt'] as int?,
-    dayParity: j['dp'] as int?,
-  );
+        days: (j['d'] as List<dynamic>).map((v) => v as int).toList(),
+        from: j['f'] as String,
+        to: j['t'] as String,
+        monthFrom: j['mf'] as int?,
+        monthTo: j['mt'] as int?,
+        dayParity: j['dp'] as int?,
+      );
 
   ParkingRule toParkingRule() => ParkingRule(
-    type:      RuleType.noParking,
-    days:      days,
-    from:      from,
-    to:        to,
-    monthFrom: monthFrom,
-    monthTo:   monthTo,
-    dayParity: dayParity,
-    note:      'Nettoyage des rues — interdit stationnement',
-  );
+        type: RuleType.noParking,
+        days: days,
+        from: from,
+        to: to,
+        monthFrom: monthFrom,
+        monthTo: monthTo,
+        dayParity: dayParity,
+        note: 'Nettoyage des rues — interdit stationnement',
+      );
 }

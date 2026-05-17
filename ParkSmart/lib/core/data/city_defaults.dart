@@ -38,7 +38,7 @@ class CityDefaults {
 
   static const deuxHeuresQuebec = ParkingRule(
     type: RuleType.free,
-    days: [1, 2, 3, 4, 5, 6],   // Lun–Sam
+    days: [1, 2, 3, 4, 5, 6], // Lun–Sam
     from: '09:00',
     to: '21:00',
     maxMinutes: 120,
@@ -64,11 +64,62 @@ class CityDefaults {
   // l'affiche pas sur la carte (impossible de savoir si l'opération est en cours).
   // Les parcomètres sont rue par rue → gérés par les segments mock, pas ici.
 
-  static const List<ParkingRule> quebecRules   = [deuxHeuresQuebec]; // 2h limit visible, libre sinon
-  static const List<ParkingRule> levisRules    = [];                  // libre par défaut
-  static const List<ParkingRule> montrealRules = [];                  // libre par défaut (SRRR via ZoneRegistry)
+  static const List<ParkingRule> quebecRules = [
+    deuxHeuresQuebec
+  ]; // 2h limit visible, libre sinon
+  static const List<ParkingRule> levisRules = []; // libre par défaut
+  static const List<ParkingRule> montrealRules =
+      []; // libre par défaut (SRRR via ZoneRegistry)
 
   /// Laval, Longueuil et autres banlieues de Montréal.
   /// Règles similaires à Montréal — à affiner par ville si nécessaire.
   static const List<ParkingRule> banlieueMontrealRules = [deneigementMontreal];
+
+  // ── Villes américaines ───────────────────────────────────────────────────
+
+  /// Vancouver (BC) — libre par défaut hors zones connues.
+  /// Les règles rue par rue viennent de CityParkingService + OsmParkingService.
+  static const List<ParkingRule> vancouverRules = [];
+
+  /// NYC — libre par défaut hors zones connues (ASP + ticket inference).
+  static const List<ParkingRule> nycRules = [];
+
+  /// Los Angeles — libre par défaut hors zones connues.
+  static const List<ParkingRule> laRules = [];
+
+  /// Chicago — libre par défaut hors zones connues.
+  static const List<ParkingRule> chicagoRules = [];
+
+  /// San Francisco — libre par défaut hors zones connues.
+  static const List<ParkingRule> sfRules = [];
+
+  /// Boston — libre par défaut hors zones connues.
+  static const List<ParkingRule> bostonRules = [];
+
+  /// Seattle — libre par défaut hors zones connues.
+  static const List<ParkingRule> seattleRules = [];
+
+  /// Toronto — libre par défaut hors zones connues.
+  static const List<ParkingRule> torontoRules = [];
+
+  /// Ottawa — libre par défaut hors zones connues.
+  static const List<ParkingRule> ottawaRules = [];
+
+  /// Calgary — libre par défaut hors zones connues.
+  static const List<ParkingRule> calgaryRules = [];
+
+  /// Washington DC — libre par défaut hors zones connues.
+  static const List<ParkingRule> dcRules = [];
+
+  /// Portland, OR — libre par défaut hors zones connues.
+  static const List<ParkingRule> portlandRules = [];
+
+  /// Philadelphia — libre par défaut hors zones connues.
+  static const List<ParkingRule> phillyRules = [];
+
+  /// Denver — libre par défaut hors zones connues.
+  static const List<ParkingRule> denverRules = [];
+
+  /// Austin — libre par défaut hors zones connues.
+  static const List<ParkingRule> austinRules = [];
 }

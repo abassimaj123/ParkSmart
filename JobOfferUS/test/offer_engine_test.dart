@@ -57,7 +57,7 @@ void main() {
     });
 
     test('income above SS wage base (\$176100) — SS caps', () {
-      final atBase  = OfferEngine.ficaTax(176100);
+      final atBase = OfferEngine.ficaTax(176100);
       final aboveBase = OfferEngine.ficaTax(200000);
       // SS should be the same; only Medicare increases
       final diff = aboveBase - atBase;
@@ -98,7 +98,7 @@ void main() {
     });
 
     test('NY — progressive, higher income → higher effective rate', () {
-      final low  = OfferEngine.stateTax(50000, 'NY');
+      final low = OfferEngine.stateTax(50000, 'NY');
       final high = OfferEngine.stateTax(200000, 'NY');
       expect(high / 200000, greaterThan(low / 50000));
     });
@@ -140,8 +140,8 @@ void main() {
     });
 
     test('rate increases with income (progressive)', () {
-      final low  = OfferEngine.effectiveTaxRate(40000, 'TX');
-      final mid  = OfferEngine.effectiveTaxRate(100000, 'TX');
+      final low = OfferEngine.effectiveTaxRate(40000, 'TX');
+      final mid = OfferEngine.effectiveTaxRate(100000, 'TX');
       final high = OfferEngine.effectiveTaxRate(300000, 'TX');
       expect(mid, greaterThan(low));
       expect(high, greaterThan(mid));
@@ -164,25 +164,25 @@ void main() {
   // ── k401kMatchValue ────────────────────────────────────────────────────────
   group('k401kMatchValue', () {
     test('100% match up to 4% → match = 4% of salary', () {
-      final match = OfferEngine.k401kMatchValue(100000,
-          matchPct: 100, upToPct: 4);
+      final match =
+          OfferEngine.k401kMatchValue(100000, matchPct: 100, upToPct: 4);
       expect(match, closeTo(4000, 0.01));
     });
 
     test('50% match up to 6% → match = 3% of salary', () {
-      final match = OfferEngine.k401kMatchValue(80000,
-          matchPct: 50, upToPct: 6);
+      final match =
+          OfferEngine.k401kMatchValue(80000, matchPct: 50, upToPct: 6);
       expect(match, closeTo(2400, 0.01));
     });
 
     test('no match → 0', () {
-      expect(OfferEngine.k401kMatchValue(100000,
-          matchPct: 0, upToPct: 4), equals(0.0));
+      expect(OfferEngine.k401kMatchValue(100000, matchPct: 0, upToPct: 4),
+          equals(0.0));
     });
 
     test('zero salary → 0', () {
-      expect(OfferEngine.k401kMatchValue(0,
-          matchPct: 100, upToPct: 4), equals(0.0));
+      expect(OfferEngine.k401kMatchValue(0, matchPct: 100, upToPct: 4),
+          equals(0.0));
     });
   });
 
@@ -233,7 +233,7 @@ void main() {
   group('compare', () {
     test('higher gross salary in same state wins on take-home', () {
       const a = JobOffer(baseSalary: 120000, stateCode: 'TX');
-      const b = JobOffer(baseSalary: 80000,  stateCode: 'TX');
+      const b = JobOffer(baseSalary: 80000, stateCode: 'TX');
       final r = OfferEngine.compare(a, b);
       expect(r.winner, Winner.offerA);
     });
@@ -246,11 +246,16 @@ void main() {
       expect(r.annualAdvantage, closeTo(0, 2));
     });
 
-    test('lower salary with full remote can beat higher salary with long commute', () {
+    test(
+        'lower salary with full remote can beat higher salary with long commute',
+        () {
       // A: $90k, 40mi/day commute → high commute cost
       // B: $85k, remote → zero commute
-      const a = JobOffer(baseSalary: 90000, stateCode: 'TX',
-          commuteMilesPerDay: 40, isRemote: false);
+      const a = JobOffer(
+          baseSalary: 90000,
+          stateCode: 'TX',
+          commuteMilesPerDay: 40,
+          isRemote: false);
       const b = JobOffer(baseSalary: 85000, stateCode: 'TX', isRemote: true);
       final r = OfferEngine.compare(a, b);
       // Commute cost: 40 * 2 * 235 * 0.70 = $13,160/yr → A nets much less
@@ -268,7 +273,7 @@ void main() {
 
     test('categoryWinners contains all required keys', () {
       const a = JobOffer(baseSalary: 100000, stateCode: 'NY');
-      const b = JobOffer(baseSalary: 90000,  stateCode: 'FL');
+      const b = JobOffer(baseSalary: 90000, stateCode: 'FL');
       final r = OfferEngine.compare(a, b);
       expect(r.categoryWinners.containsKey('takeHome'), isTrue);
       expect(r.categoryWinners.containsKey('bonus'), isTrue);
@@ -284,10 +289,16 @@ void main() {
     });
 
     test('with 401k match: better match increases total comp', () {
-      const noMatch   = JobOffer(baseSalary: 100000, stateCode: 'TX',
-          k401kMatchPct: 0, k401kUpToPct: 0);
-      const withMatch = JobOffer(baseSalary: 100000, stateCode: 'TX',
-          k401kMatchPct: 100, k401kUpToPct: 4);
+      const noMatch = JobOffer(
+          baseSalary: 100000,
+          stateCode: 'TX',
+          k401kMatchPct: 0,
+          k401kUpToPct: 0);
+      const withMatch = JobOffer(
+          baseSalary: 100000,
+          stateCode: 'TX',
+          k401kMatchPct: 100,
+          k401kUpToPct: 4);
       final r = OfferEngine.compare(withMatch, noMatch);
       expect(r.resultA.totalCompensation,
           greaterThan(r.resultB.totalCompensation));
@@ -304,8 +315,9 @@ void main() {
 
     test('higher annual raise flips 5-year winner', () {
       // A: $100k, 2% raise; B: $80k, 8% raise
-      const a = JobOffer(baseSalary: 100000, stateCode: 'TX', annualRaisePct: 2);
-      const b = JobOffer(baseSalary:  80000, stateCode: 'TX', annualRaisePct: 8);
+      const a =
+          JobOffer(baseSalary: 100000, stateCode: 'TX', annualRaisePct: 2);
+      const b = JobOffer(baseSalary: 80000, stateCode: 'TX', annualRaisePct: 8);
       final r = OfferEngine.compare(a, b);
       final totalA = r.resultA.fiveYearProjection.fold(0.0, (s, v) => s + v);
       final totalB = r.resultB.fiveYearProjection.fold(0.0, (s, v) => s + v);
@@ -319,18 +331,28 @@ void main() {
   group('fiveYearProjection', () {
     test('returns exactly 5 entries', () {
       final proj = OfferEngine.fiveYearProjection(
-        baseSalary: 80000, annualRaisePct: 3, bonusPct: 0,
-        k401kMatchPct: 0, k401kUpToPct: 0, stateCode: 'TX',
-        benefits: 0, commuteCostAnnual: 0,
+        baseSalary: 80000,
+        annualRaisePct: 3,
+        bonusPct: 0,
+        k401kMatchPct: 0,
+        k401kUpToPct: 0,
+        stateCode: 'TX',
+        benefits: 0,
+        commuteCostAnnual: 0,
       );
       expect(proj.length, equals(5));
     });
 
     test('each year is greater than previous (positive raise)', () {
       final proj = OfferEngine.fiveYearProjection(
-        baseSalary: 80000, annualRaisePct: 5, bonusPct: 0,
-        k401kMatchPct: 0, k401kUpToPct: 0, stateCode: 'TX',
-        benefits: 0, commuteCostAnnual: 0,
+        baseSalary: 80000,
+        annualRaisePct: 5,
+        bonusPct: 0,
+        k401kMatchPct: 0,
+        k401kUpToPct: 0,
+        stateCode: 'TX',
+        benefits: 0,
+        commuteCostAnnual: 0,
       );
       for (int i = 1; i < proj.length; i++) {
         expect(proj[i], greaterThan(proj[i - 1]));
@@ -339,9 +361,14 @@ void main() {
 
     test('zero raise — all years equal', () {
       final proj = OfferEngine.fiveYearProjection(
-        baseSalary: 80000, annualRaisePct: 0, bonusPct: 0,
-        k401kMatchPct: 0, k401kUpToPct: 0, stateCode: 'TX',
-        benefits: 0, commuteCostAnnual: 0,
+        baseSalary: 80000,
+        annualRaisePct: 0,
+        bonusPct: 0,
+        k401kMatchPct: 0,
+        k401kUpToPct: 0,
+        stateCode: 'TX',
+        benefits: 0,
+        commuteCostAnnual: 0,
       );
       for (int i = 1; i < proj.length; i++) {
         expect(proj[i], closeTo(proj[0], 1));

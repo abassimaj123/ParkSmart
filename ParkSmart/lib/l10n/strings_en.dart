@@ -37,7 +37,8 @@ class AppStringsEN {
 
   // Paywall
   final upgradeTitle = 'Unlock Full Features';
-  final upgradeSubtitle = 'Save unlimited calculations and enjoy ad-free experience';
+  final upgradeSubtitle =
+      'Save unlimited calculations and enjoy ad-free experience';
   final watchAd = 'Watch Ad (60 min free)';
   final buyNow = 'Get Premium';
 

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/services/analytics_service.dart';
 import '../core/theme/app_theme.dart';
+import 'package:calcwise_core/calcwise_core.dart';
 
 /// Promoted app entry — shown at the bottom of the info sheet.
 enum _PromoApp {
   mortgageUS(
-    icon: Icons.home_outlined,
+    icon: Icons.home_rounded,
     color: Color(0xFF1B3A6B),
     nameEn: 'MortgageUS',
     nameFr: 'MortgageUS',
@@ -15,7 +16,7 @@ enum _PromoApp {
     storeId: 'com.calcwise.mortgageus',
   ),
   affordabilityUS(
-    icon: Icons.calculate_outlined,
+    icon: Icons.calculate_rounded,
     color: Color(0xFF0D7242),
     nameEn: 'AffordabilityUS',
     nameFr: 'AffordabilityUS',
@@ -24,7 +25,7 @@ enum _PromoApp {
     storeId: 'com.calcwise.affordabilityus',
   ),
   salaryApp(
-    icon: Icons.payments_outlined,
+    icon: Icons.payments_rounded,
     color: Color(0xFFE67E22),
     nameEn: 'Salary Calculator',
     nameFr: 'Calculateur de salaire',
@@ -44,12 +45,12 @@ enum _PromoApp {
   });
 
   final IconData icon;
-  final Color    color;
-  final String   nameEn;
-  final String   nameFr;
-  final String   descEn;
-  final String   descFr;
-  final String   storeId;
+  final Color color;
+  final String nameEn;
+  final String nameFr;
+  final String descEn;
+  final String descFr;
+  final String storeId;
 
   String name(bool isFr) => isFr ? nameFr : nameEn;
   String desc(bool isFr) => isFr ? descFr : descEn;
@@ -87,7 +88,7 @@ class CrossPromoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label   = isFr ? 'Découvrez aussi' : 'Also from Calcwise';
+    final label = isFr ? 'Découvrez aussi' : 'Also from Calcwise';
     final openLbl = isFr ? 'Voir' : 'View';
 
     return GestureDetector(
@@ -97,25 +98,23 @@ class CrossPromoCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: _promo.color.withValues(alpha: 0.06),
-          border:
-              Border.all(color: _promo.color.withValues(alpha: 0.20)),
-          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _promo.color.withValues(alpha: 0.20)),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Row(children: [
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color:       _promo.color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: _promo.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.mdPlus),
             ),
             child: Icon(_promo.icon, color: _promo.color, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(label,
                   style: TextStyle(
                       fontSize: 10,
@@ -123,26 +122,25 @@ class CrossPromoCard extends StatelessWidget {
                       fontWeight: FontWeight.w500)),
               Text(_promo.name(isFr),
                   style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTextSize.md,
                       fontWeight: FontWeight.w700,
                       color: _promo.color)),
               Text(_promo.desc(isFr),
                   style: const TextStyle(
-                      fontSize: 11, color: Color(0xFF64748B))),
+                      fontSize: AppTextSize.xs, color: Color(0xFF64748B))),
             ]),
           ),
           TextButton(
             onPressed: _open,
             style: TextButton.styleFrom(
               foregroundColor: _promo.color,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(AppRadius.md)),
             ),
             child: Text(openLbl,
                 style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w600)),
+                    fontSize: AppTextSize.sm, fontWeight: FontWeight.w600)),
           ),
         ]),
       ),

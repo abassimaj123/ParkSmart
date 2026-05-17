@@ -4,9 +4,9 @@ import 'parking_rule.dart';
 /// Ville (ou région) supportée par ParkSmart.
 /// Ajouter une ville = ajouter une entrée dans [CityRegistry] uniquement.
 class City {
-  final String id;           // identifiant stable : 'capitale', 'montreal'
-  final String name;         // nom affiché : 'Québec', 'Montréal'
-  final LatLng center;       // centre carte au chargement
+  final String id; // identifiant stable : 'capitale', 'montreal'
+  final String name; // nom affiché : 'Québec', 'Montréal'
+  final LatLng center; // centre carte au chargement
   final double defaultZoom;
 
   /// Bbox géographique pré-filtre : 'latMin,lonMin,latMax,lonMax'.
@@ -48,10 +48,10 @@ class City {
     required this.center,
     required this.overpassBbox,
     required this.defaultRules,
-    this.overpassAreaNames        = const [],
-    this.segmentCityNames         = const [],
+    this.overpassAreaNames = const [],
+    this.segmentCityNames = const [],
     this.hasComprehensiveDefaults = false,
-    this.defaultZoom              = 14.5,
+    this.defaultZoom = 14.5,
   });
 
   /// Noms de segment effectifs : [segmentCityNames] si non vide, sinon [name].

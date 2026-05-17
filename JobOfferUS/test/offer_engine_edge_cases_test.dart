@@ -49,7 +49,7 @@ void main() {
     });
 
     test('CA progressive: \$50k has lower effective rate than \$500k', () {
-      final r50k  = StateTaxData.calculate(50000, 'CA')  / 50000;
+      final r50k = StateTaxData.calculate(50000, 'CA') / 50000;
       final r500k = StateTaxData.calculate(500000, 'CA') / 500000;
       expect(r500k, greaterThan(r50k));
     });
@@ -73,26 +73,21 @@ void main() {
 
     test('CoL adjustment: same city in/out → no change', () {
       final adj = CityColData.adjust(
-          salary: 100000,
-          fromCity: 'Dallas, TX',
-          toCity: 'Dallas, TX');
+          salary: 100000, fromCity: 'Dallas, TX', toCity: 'Dallas, TX');
       expect(adj, closeTo(100000, 1));
     });
 
     test('Adjusting from NYC to Memphis makes salary smaller', () {
       // NYC (187) → Memphis (82) → purchasing power equivalent is much less
       final adj = CityColData.adjust(
-          salary: 187000,
-          fromCity: 'New York, NY',
-          toCity: 'Memphis, TN');
+          salary: 187000, fromCity: 'New York, NY', toCity: 'Memphis, TN');
       expect(adj, lessThan(100000));
     });
 
-    test('Adjusting from cheap city to expensive → salary equivalent is larger', () {
+    test('Adjusting from cheap city to expensive → salary equivalent is larger',
+        () {
       final adj = CityColData.adjust(
-          salary: 60000,
-          fromCity: 'Memphis, TN',
-          toCity: 'San Francisco, CA');
+          salary: 60000, fromCity: 'Memphis, TN', toCity: 'San Francisco, CA');
       expect(adj, greaterThan(100000));
     });
 
@@ -127,7 +122,7 @@ void main() {
   // ── FICA SS cap ────────────────────────────────────────────────────────────
   group('ficaTax — SS wage base cap', () {
     test('SS contribution caps at \$176100 wage base', () {
-      final at    = OfferEngine.ficaTax(176100);
+      final at = OfferEngine.ficaTax(176100);
       final above = OfferEngine.ficaTax(176100 + 50000); // = 226100
       // SS: capped — no extra SS (0)
       // Medicare on 50k: 50000 * 0.0145 = 725
@@ -149,8 +144,10 @@ void main() {
   // ── Full comparison edge cases ─────────────────────────────────────────────
   group('compare — edge cases', () {
     test('RSU grant in offer A increases total comp', () {
-      const noRsu  = JobOffer(baseSalary: 100000, stateCode: 'TX', annualRsuValue: 0);
-      const withRsu = JobOffer(baseSalary: 100000, stateCode: 'TX', annualRsuValue: 20000);
+      const noRsu =
+          JobOffer(baseSalary: 100000, stateCode: 'TX', annualRsuValue: 0);
+      const withRsu =
+          JobOffer(baseSalary: 100000, stateCode: 'TX', annualRsuValue: 20000);
       final r = OfferEngine.compare(withRsu, noRsu);
       expect(r.winner, Winner.offerA);
       expect(r.resultA.totalCompensation - r.resultB.totalCompensation,
@@ -158,8 +155,9 @@ void main() {
     });
 
     test('PTO difference is reflected in total comp', () {
-      const noPto  = JobOffer(baseSalary: 100000, stateCode: 'TX', ptoDays: 0);
-      const withPto = JobOffer(baseSalary: 100000, stateCode: 'TX', ptoDays: 20);
+      const noPto = JobOffer(baseSalary: 100000, stateCode: 'TX', ptoDays: 0);
+      const withPto =
+          JobOffer(baseSalary: 100000, stateCode: 'TX', ptoDays: 20);
       final r = OfferEngine.compare(withPto, noPto);
       // PTO value ≈ 100000/260*20 = 7692
       expect(r.resultA.ptoValue, closeTo(7692, 100));
@@ -167,19 +165,23 @@ void main() {
     });
 
     test('remote eliminates commute cost entirely', () {
-      const onsite = JobOffer(baseSalary: 100000, stateCode: 'TX',
-          commuteMilesPerDay: 25, isRemote: false);
-      const remote  = JobOffer(baseSalary: 100000, stateCode: 'TX', isRemote: true);
+      const onsite = JobOffer(
+          baseSalary: 100000,
+          stateCode: 'TX',
+          commuteMilesPerDay: 25,
+          isRemote: false);
+      const remote =
+          JobOffer(baseSalary: 100000, stateCode: 'TX', isRemote: true);
       final r = OfferEngine.compare(onsite, remote);
       expect(r.resultA.commuteCost, greaterThan(0));
       expect(r.resultB.commuteCost, equals(0.0));
     });
 
     test('health benefits increase total comp proportionally', () {
-      const noHealth   = JobOffer(baseSalary: 100000, stateCode: 'TX',
-          healthInsuranceSavings: 0);
-      const withHealth = JobOffer(baseSalary: 100000, stateCode: 'TX',
-          healthInsuranceSavings: 5000);
+      const noHealth = JobOffer(
+          baseSalary: 100000, stateCode: 'TX', healthInsuranceSavings: 0);
+      const withHealth = JobOffer(
+          baseSalary: 100000, stateCode: 'TX', healthInsuranceSavings: 5000);
       final r = OfferEngine.compare(withHealth, noHealth);
       expect(r.resultA.healthBenefits, closeTo(5000, 1));
       expect(r.winner, Winner.offerA);
@@ -200,13 +202,16 @@ void main() {
 
     test('remote vs on-site generates remote advantage insight', () {
       const a = JobOffer(baseSalary: 90000, stateCode: 'TX', isRemote: true);
-      const b = JobOffer(baseSalary: 95000, stateCode: 'TX',
-          commuteMilesPerDay: 30, isRemote: false);
+      const b = JobOffer(
+          baseSalary: 95000,
+          stateCode: 'TX',
+          commuteMilesPerDay: 30,
+          isRemote: false);
       final r = OfferEngine.compare(a, b);
       final insights = InsightEngine.generate(r);
       // Should detect remote advantage
-      final hasRemoteInsight = insights.any(
-          (i) => i.title.toLowerCase().contains('remote'));
+      final hasRemoteInsight =
+          insights.any((i) => i.title.toLowerCase().contains('remote'));
       expect(hasRemoteInsight, isTrue);
     });
 
@@ -216,8 +221,7 @@ void main() {
       const b = JobOffer(baseSalary: 150000, stateCode: 'TX');
       final r = OfferEngine.compare(a, b);
       final insights = InsightEngine.generate(r);
-      expect(insights.any((i) =>
-          i.body.toLowerCase().contains('tax')), isTrue);
+      expect(insights.any((i) => i.body.toLowerCase().contains('tax')), isTrue);
     });
 
     test('Spanish insights contain Spanish text', () {
@@ -225,10 +229,12 @@ void main() {
       const b = JobOffer(baseSalary: 100000, stateCode: 'TX');
       final r = OfferEngine.compare(a, b);
       final insights = InsightEngine.generate(r, isSpanish: true);
-      expect(insights.any((i) =>
-          i.title.contains('Carga fiscal') ||
-          i.title.contains('costo') ||
-          i.title.contains('Oferta')), isTrue);
+      expect(
+          insights.any((i) =>
+              i.title.contains('Carga fiscal') ||
+              i.title.contains('costo') ||
+              i.title.contains('Oferta')),
+          isTrue);
     });
 
     test('returns non-empty list for any valid comparison', () {
@@ -244,8 +250,8 @@ void main() {
     test('monthlyTakeHome = netTakeHome / 12', () {
       const o = JobOffer(baseSalary: 120000, stateCode: 'TX');
       final r = OfferEngine.compare(o, o);
-      expect(r.resultA.monthlyTakeHome,
-          closeTo(r.resultA.netTakeHome / 12, 0.01));
+      expect(
+          r.resultA.monthlyTakeHome, closeTo(r.resultA.netTakeHome / 12, 0.01));
     });
 
     test('monthlyTotalComp = totalCompensation / 12', () {

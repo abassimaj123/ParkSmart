@@ -110,6 +110,19 @@ install_apk "AutoLoan (US)" com.autoloan.us.calculator \
 install_apk "AutoLoan (UK)" com.autoloan.uk.calculator \
   "D:/mob/AutoLoan/build/app/outputs/flutter-apk/app-uk-debug.apk"
 
+# ── Other Flutter apps ────────────────────────────────────────────────────────
+install_apk PropertyROISuite  com.calqwise.propertyroisuite \
+  "D:/mob/PropertyROISuite/build/app/outputs/flutter-apk/app-debug.apk"
+
+install_apk rideprofit        com.rideprofit.app \
+  "D:/mob/rideprofit/build/app/outputs/flutter-apk/app-debug.apk"
+
+install_apk ParkSmart         com.parksmart.app \
+  "D:/mob/ParkSmart/build/app/outputs/flutter-apk/app-debug.apk"
+
+install_apk JobOfferUS        com.joboffer.us.calculator \
+  "D:/mob/JobOfferUS/build/app/outputs/flutter-apk/app-debug.apk"
+
 # ── Kotlin apps ───────────────────────────────────────────────────────────────
 install_apk TaxeCA  com.taxeca.calculator \
   "D:/mob/TaxeCA/app/build/outputs/apk/debug/app-debug.apk"
@@ -121,4 +134,4 @@ install_apk TaxUS   com.taxus.calculator \
   "D:/mob/TaxUS/app/build/outputs/apk/debug/app-debug.apk"
 
 echo ""
-echo "=== ALL 27 APKs INSTALL DONE ==="
+echo "=== ALL 31 APKs INSTALL DONE ==="

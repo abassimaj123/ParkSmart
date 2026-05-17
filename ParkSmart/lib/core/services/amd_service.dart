@@ -17,6 +17,8 @@ import '../models/parking_rule.dart';
 ///   final amd   = AmdService();
 ///   await amd.load();
 ///   final rules = amd.rulesNear(lon, lat); // null si hors secteur AMD
+@Deprecated(
+    'Use CityParkingService instead. Will be removed after Phase 0 validation.')
 class AmdService {
   static final AmdService _instance = AmdService._();
   factory AmdService() => _instance;
@@ -40,12 +42,12 @@ class AmdService {
     if (_loaded) return;
 
     try {
-      final raw  = await rootBundle.loadString('assets/amd_montreal.json');
+      final raw = await rootBundle.loadString('assets/amd_montreal.json');
       final data = jsonDecode(raw) as List<dynamic>;
 
       for (final item in data) {
         final spot = _AmdSpot.fromJson(item as Map<String, dynamic>);
-        final idx  = _spots.length;
+        final idx = _spots.length;
         _spots.add(spot);
 
         // Indexer dans la grille
@@ -81,13 +83,13 @@ class AmdService {
         if (indices == null) continue;
 
         for (final idx in indices) {
-          final s  = _spots[idx];
+          final s = _spots[idx];
           final dl = s.lat - lat;
           final dx = s.lon - lon;
           final d2 = dl * dl + dx * dx;
           if (d2 < bestD2) {
             bestD2 = d2;
-            best   = s;
+            best = s;
           }
         }
       }
@@ -114,24 +116,24 @@ class _AmdSpot {
   const _AmdSpot({required this.lon, required this.lat, required this.rules});
 
   factory _AmdSpot.fromJson(Map<String, dynamic> json) {
-    final rateCents  = (json['c'] as num?)?.toInt() ?? 0;
+    final rateCents = (json['c'] as num?)?.toInt() ?? 0;
     final ratePerHour = rateCents > 0 ? rateCents / 100.0 : null;
 
     final rules = (json['p'] as List<dynamic>).map((p) {
       final days = (p['d'] as List<dynamic>).cast<int>();
       return ParkingRule(
-        type:         RuleType.meter,
-        days:         days,
-        from:         p['f'] as String,
-        to:           p['t'] as String,
-        ratePerHour:  ratePerHour,
-        maxMinutes:   (p['m'] as num?)?.toInt(),
+        type: RuleType.meter,
+        days: days,
+        from: p['f'] as String,
+        to: p['t'] as String,
+        ratePerHour: ratePerHour,
+        maxMinutes: (p['m'] as num?)?.toInt(),
       );
     }).toList();
 
     return _AmdSpot(
-      lon:   (json['x'] as num).toDouble(),
-      lat:   (json['y'] as num).toDouble(),
+      lon: (json['x'] as num).toDouble(),
+      lat: (json['y'] as num).toDouble(),
       rules: rules,
     );
   }

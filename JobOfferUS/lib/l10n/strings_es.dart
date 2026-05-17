@@ -50,7 +50,8 @@ class AppStringsES {
 
   // Paywall
   final upgradeTitle = 'Desbloquea Funciones Completas';
-  final upgradeSubtitle = 'Sigue ofertas ilimitadas y exporta PDFs sin anuncios';
+  final upgradeSubtitle =
+      'Sigue ofertas ilimitadas y exporta PDFs sin anuncios';
   final watchAd = 'Ver Anuncio (60 min gratis)';
   final buyNow = 'Obtener Premium';
 

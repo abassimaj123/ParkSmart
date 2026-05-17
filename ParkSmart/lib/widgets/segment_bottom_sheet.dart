@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:calcwise_core/calcwise_core.dart' show PaywallSoft;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:calcwise_core/calcwise_core.dart';
 import '../core/models/street_segment.dart';
 import '../core/models/parking_rule.dart';
 import '../core/services/freemium_service.dart';
@@ -9,6 +11,7 @@ import '../core/services/iap_service.dart';
 import '../core/services/rule_engine.dart';
 import '../core/services/session_service.dart';
 import '../core/theme/app_theme.dart';
+import 'contribution_sheet.dart';
 
 class SegmentBottomSheet extends StatelessWidget {
   final StreetSegment segment;
@@ -28,9 +31,9 @@ class SegmentBottomSheet extends StatelessWidget {
     final zoneColor = AppTheme.colorForHex(result.colorHex);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -41,7 +44,7 @@ class SegmentBottomSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFFCBD5E1),
+              color: Theme.of(context).colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -84,7 +87,7 @@ class SegmentBottomSheet extends StatelessWidget {
                                   .headlineSmall
                                   ?.copyWith(
                                     color: AppTheme.primary,
-                                    fontSize: 20,
+                                    fontSize: AppTextSize.title,
                                   ),
                             ),
                             const SizedBox(height: 4),
@@ -95,10 +98,10 @@ class SegmentBottomSheet extends StatelessWidget {
                                 Text(
                                   segment.city,
                                   style: TextStyle(
-                                    color: Theme.of(context).brightness == Brightness.dark
-                                      ? const Color(0xFFCBD5E1)
-                                      : const Color(0xFF475569),
-                                    fontSize: 13,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontSize: AppTextSize.md,
                                   ),
                                 ),
                               ],
@@ -107,9 +110,9 @@ class SegmentBottomSheet extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.close_rounded),
                         onPressed: onClose,
-                        color: const Color(0xFF64748B),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ],
                   ),
@@ -154,9 +157,8 @@ class SegmentBottomSheet extends StatelessWidget {
                           ),
                     ),
                     const SizedBox(height: 8),
-                    ...segment.rules
-                        .map((rule) => _RuleRow(rule: rule, viewTime: viewTime))
-                        .toList(),
+                    ...segment.rules.map(
+                        (rule) => _RuleRow(rule: rule, viewTime: viewTime)),
                   ],
 
                   const SizedBox(height: 16),
@@ -170,17 +172,19 @@ class SegmentBottomSheet extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Données du ${_formatDate(segment.sourceDate)}',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: TextStyle(
+                        fontSize: AppTextSize.xs,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
 
                   if (segment.notes != null) ...[
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(AppSpacing.smPlus),
                       decoration: BoxDecoration(
-                        color: Colors.amber[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.amber[200]!),
+                        color: Colors.amber.shade100.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: Colors.amber.shade300),
                       ),
                       child: Row(
                         children: [
@@ -191,7 +195,7 @@ class SegmentBottomSheet extends StatelessWidget {
                             child: Text(
                               segment.notes!,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: AppTextSize.sm,
                                 color: Colors.amber[900],
                               ),
                             ),
@@ -204,8 +208,19 @@ class SegmentBottomSheet extends StatelessWidget {
               ),
             ),
           ),
+          // Navigate + Report buttons row
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                _NavigateButton(segment: segment),
+                const SizedBox(width: 4),
+                _ReportRuleButton(segment: segment),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             child: _StartSessionButton(
               segment: segment,
               viewTime: viewTime,
@@ -239,7 +254,7 @@ class _StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: zoneColor.withAlpha(31),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: zoneColor.withAlpha(102)),
       ),
       child: Row(
@@ -258,7 +273,7 @@ class _StatusBadge extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w700,
               color: zoneColor,
-              fontSize: 15,
+              fontSize: AppTextSize.bodyMd,
             ),
           ),
           if (result.hasTimeLimit && result.activeRule?.maxMinutes != null) ...[
@@ -272,7 +287,7 @@ class _StatusBadge extends StatelessWidget {
               child: Text(
                 'Max ${_formatDuration(result.activeRule!.maxMinutes!)}',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppTextSize.xs,
                   fontWeight: FontWeight.w600,
                   color: zoneColor,
                 ),
@@ -316,13 +331,14 @@ class _NextChangeBanner extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(Icons.timer_outlined, size: 14, color: const Color(0xFF475569)),
+          Icon(Icons.timer_rounded,
+              size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 6),
           Text(
             '$label (${DateFormat('HH:mm').format(nextChange)})',
             style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF475569),
+              fontSize: AppTextSize.sm,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -341,14 +357,14 @@ class _MeterInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppTheme.meter.withAlpha(20),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdPlus),
       ),
       child: Row(
         children: [
-          Icon(Icons.payment, color: AppTheme.meter, size: 18),
+          const Icon(Icons.payment, color: AppTheme.meter, size: 18),
           const SizedBox(width: 10),
           if (rule.ratePerHour != null)
             Text(
@@ -356,18 +372,22 @@ class _MeterInfo extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 color: AppTheme.meter,
-                fontSize: 14,
+                fontSize: AppTextSize.body,
               ),
             ),
           if (rule.ratePerHour != null && rule.maxMinutes != null)
-            const Text('  ·  ', style: TextStyle(color: Color(0xFF64748B))),
+            Builder(
+                builder: (context) => Text('  ·  ',
+                    style: TextStyle(
+                        color:
+                            Theme.of(context).colorScheme.onSurfaceVariant))),
           if (rule.maxMinutes != null)
             Text(
               'Max ${_formatMins(rule.maxMinutes!)}',
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: AppTheme.meter,
-                fontSize: 14,
+                fontSize: AppTextSize.body,
               ),
             ),
         ],
@@ -395,32 +415,32 @@ class _PermitInfo extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppTheme.restricted.withAlpha(26),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdPlus),
         border: Border.all(color: AppTheme.restricted.withAlpha(77)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.badge_outlined, color: AppTheme.restricted, size: 18),
+          const Icon(Icons.badge_rounded, color: AppTheme.restricted, size: 18),
           const SizedBox(width: 10),
           const Text(
             'Zone permis : ',
             style: TextStyle(
               color: AppTheme.restricted,
-              fontSize: 14,
+              fontSize: AppTextSize.body,
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
               color: AppTheme.restricted,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Text(
               zone,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
-                fontSize: 13,
+                fontSize: AppTextSize.md,
               ),
             ),
           ),
@@ -470,10 +490,10 @@ class _AlternatingInfo extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: Colors.orange[50],
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.mdPlus),
         border: Border.all(color: Colors.orange.withAlpha(120)),
       ),
       child: Column(
@@ -488,7 +508,7 @@ class _AlternatingInfo extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.orange,
                   fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                  fontSize: AppTextSize.md,
                 ),
               ),
             ],
@@ -499,12 +519,12 @@ class _AlternatingInfo extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.orange.withAlpha(30),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Text(
               '$currentUnit · Parité : ${currentParity == 0 ? "pair" : "impair"}',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: AppTextSize.sm,
                 fontWeight: FontWeight.w600,
                 color: Colors.deepOrange,
               ),
@@ -513,6 +533,7 @@ class _AlternatingInfo extends StatelessWidget {
           const SizedBox(height: 10),
           // Côté INTERDIT maintenant
           _sideLine(
+            context: context,
             icon: Icons.block,
             color: AppTheme.restricted,
             label: forbiddenSideNote,
@@ -521,6 +542,7 @@ class _AlternatingInfo extends StatelessWidget {
           const SizedBox(height: 6),
           // Côté LIBRE maintenant
           _sideLine(
+            context: context,
             icon: Icons.check_circle_outline,
             color: AppTheme.free,
             label: freeSideNote,
@@ -532,6 +554,7 @@ class _AlternatingInfo extends StatelessWidget {
   }
 
   Widget _sideLine({
+    required BuildContext context,
     required IconData icon,
     required Color color,
     required String label,
@@ -549,7 +572,7 @@ class _AlternatingInfo extends StatelessWidget {
               Text(
                 suffix,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: AppTextSize.xs,
                   fontWeight: FontWeight.w800,
                   color: color,
                   letterSpacing: 0.5,
@@ -557,7 +580,9 @@ class _AlternatingInfo extends StatelessWidget {
               ),
               Text(
                 label,
-                style: const TextStyle(fontSize: 11, color: Colors.black87),
+                style: TextStyle(
+                    fontSize: AppTextSize.xs,
+                    color: Theme.of(context).colorScheme.onSurface),
               ),
             ],
           ),
@@ -567,8 +592,19 @@ class _AlternatingInfo extends StatelessWidget {
   }
 
   static const _months = [
-    '', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+    '',
+    'Janvier',
+    'Février',
+    'Mars',
+    'Avril',
+    'Mai',
+    'Juin',
+    'Juillet',
+    'Août',
+    'Septembre',
+    'Octobre',
+    'Novembre',
+    'Décembre',
   ];
   String _monthName(int m) => _months[m];
 }
@@ -583,34 +619,51 @@ class _RuleRow extends StatelessWidget {
 
   Color get _baseColor {
     switch (rule.type) {
-      case RuleType.noParking:    return AppTheme.restricted;
-      case RuleType.permitOnly:   return AppTheme.restricted;
-      case RuleType.permitOrLimit: return AppTheme.free;
-      case RuleType.meter:        return AppTheme.meter;
-      case RuleType.free:         return AppTheme.free;
+      case RuleType.noParking:
+        return AppTheme.restricted;
+      case RuleType.permitOnly:
+        return AppTheme.restricted;
+      case RuleType.permitOrLimit:
+        return AppTheme.free;
+      case RuleType.meter:
+        return AppTheme.meter;
+      case RuleType.free:
+        return AppTheme.free;
     }
   }
 
   IconData get _ruleIcon {
     switch (rule.type) {
-      case RuleType.noParking:    return Icons.block;
-      case RuleType.permitOnly:   return Icons.badge_outlined;
-      case RuleType.permitOrLimit: return Icons.hourglass_bottom_outlined;
-      case RuleType.meter:        return Icons.timer_outlined;
-      case RuleType.free:         return Icons.check_circle_outline;
+      case RuleType.noParking:
+        return Icons.block;
+      case RuleType.permitOnly:
+        return Icons.badge_rounded;
+      case RuleType.permitOrLimit:
+        return Icons.hourglass_bottom_rounded;
+      case RuleType.meter:
+        return Icons.timer_rounded;
+      case RuleType.free:
+        return Icons.check_circle_outline;
     }
   }
 
   String get _typeLabel {
     switch (rule.type) {
-      case RuleType.noParking:    return 'Interdit';
-      case RuleType.permitOnly:   return 'Permis résidents requis';
+      case RuleType.noParking:
+        return 'Interdit';
+      case RuleType.permitOnly:
+        return 'Permis résidents requis';
       case RuleType.permitOrLimit:
-        final lim = rule.maxMinutes != null ? ' (${_fmtMins(rule.maxMinutes!)} max)' : '';
+        final lim = rule.maxMinutes != null
+            ? ' (${_fmtMins(rule.maxMinutes!)} max)'
+            : '';
         return '2h max · Permis au-delà$lim';
-      case RuleType.meter:        return 'Parcomètre';
+      case RuleType.meter:
+        return 'Parcomètre';
       case RuleType.free:
-        return rule.maxMinutes != null ? 'Limité ${_fmtMins(rule.maxMinutes!)}' : 'Libre';
+        return rule.maxMinutes != null
+            ? 'Limité ${_fmtMins(rule.maxMinutes!)}'
+            : 'Libre';
     }
   }
 
@@ -624,7 +677,8 @@ class _RuleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = _isActive;
-    final color  = active ? _baseColor : const Color(0xFF64748B);
+    final color =
+        active ? _baseColor : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Opacity(
       opacity: active ? 1.0 : 0.55,
@@ -633,7 +687,7 @@ class _RuleRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: color.withAlpha(active ? 18 : 10),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border(
             left: BorderSide(color: color, width: 4),
             top: BorderSide(color: color.withAlpha(active ? 60 : 35)),
@@ -654,30 +708,42 @@ class _RuleRow extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: color,
-                    fontSize: 13,
+                    fontSize: AppTextSize.md,
                   ),
                 ),
                 const Spacer(),
                 // Badge d'état
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: active
                         ? color.withAlpha(30)
-                        : const Color(0xFF64748B).withAlpha(20),
+                        : Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withAlpha(20),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: active ? color.withAlpha(80) : const Color(0xFFCBD5E1),
+                      color: active
+                          ? color.withAlpha(80)
+                          : Theme.of(context).colorScheme.outlineVariant,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 6, height: 6,
+                        width: 6,
+                        height: 6,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: active ? color : const Color(0xFF94A3B8),
+                          color: active
+                              ? color
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant
+                                  .withAlpha(128),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -686,7 +752,9 @@ class _RuleRow extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: active ? color : const Color(0xFF64748B),
+                          color: active
+                              ? color
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -722,7 +790,9 @@ class _RuleRow extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 rule.note!,
-                style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                style: TextStyle(
+                    fontSize: AppTextSize.xs,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ],
@@ -737,7 +807,8 @@ class _InfoChip extends StatelessWidget {
   final Color color;
   final bool bold;
 
-  const _InfoChip({required this.label, required this.color, this.bold = false});
+  const _InfoChip(
+      {required this.label, required this.color, this.bold = false});
 
   @override
   Widget build(BuildContext context) {
@@ -745,12 +816,12 @@ class _InfoChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: color.withAlpha(15),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: AppTextSize.xs,
           fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
           color: color,
         ),
@@ -786,8 +857,8 @@ class _ConfidenceBar extends StatelessWidget {
             Text(
               'Fiabilité',
               style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF475569),
+                fontSize: AppTextSize.sm,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -795,7 +866,7 @@ class _ConfidenceBar extends StatelessWidget {
             Text(
               _label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: AppTextSize.xs,
                 color: _color,
                 fontWeight: FontWeight.w600,
               ),
@@ -804,18 +875,19 @@ class _ConfidenceBar extends StatelessWidget {
             Text(
               '${(confidence * 100).round()}%',
               style: TextStyle(
-                fontSize: 11,
-                color: Color(0xFF64748B),
+                fontSize: AppTextSize.xs,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
         ),
         const SizedBox(height: 4),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
           child: LinearProgressIndicator(
             value: confidence,
-            backgroundColor: const Color(0xFFE2E8F0),
+            backgroundColor:
+                Theme.of(context).colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation<Color>(_color),
             minHeight: 6,
           ),
@@ -839,15 +911,16 @@ class _SourcesRow extends StatelessWidget {
           .map((s) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFCBD5E1)!),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 child: Text(
                   '${s.icon} ${s.label}',
                   style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF334155),
+                    fontSize: AppTextSize.xs,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -868,14 +941,101 @@ class _SideBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: AppTheme.primary.withAlpha(26),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Text(
         side,
         style: const TextStyle(
-          fontSize: 11,
+          fontSize: AppTextSize.xs,
           color: AppTheme.primary,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Navigate to spot ──────────────────────────────────────────────────────────
+class _NavigateButton extends StatelessWidget {
+  final StreetSegment segment;
+
+  const _NavigateButton({required this.segment});
+
+  (double lat, double lon) get _midpoint {
+    if (segment.coordinates.isEmpty) return (0.0, 0.0);
+    final lons = segment.coordinates.map((c) => c[0]);
+    final lats = segment.coordinates.map((c) => c[1]);
+    return (
+      lats.reduce((a, b) => a + b) / lats.length,
+      lons.reduce((a, b) => a + b) / lons.length,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      icon: const Icon(Icons.directions_rounded, size: 16),
+      label: const Text('Naviguer'),
+      style: TextButton.styleFrom(
+        foregroundColor: AppTheme.primary,
+        textStyle: const TextStyle(
+            fontSize: AppTextSize.md, fontWeight: FontWeight.w600),
+      ),
+      onPressed: () async {
+        final mid = _midpoint;
+        final lat = mid.$1;
+        final lon = mid.$2;
+        final label = Uri.encodeComponent(segment.streetName);
+        // Try Google Maps first, fall back to geo: URI
+        final googleMapsUrl = Uri.parse(
+          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lon&travelmode=driving',
+        );
+        final geoUrl = Uri.parse('geo:$lat,$lon?q=$label');
+        if (await canLaunchUrl(googleMapsUrl)) {
+          await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+        } else if (await canLaunchUrl(geoUrl)) {
+          await launchUrl(geoUrl, mode: LaunchMode.externalApplication);
+        }
+      },
+    );
+  }
+}
+
+class _ReportRuleButton extends StatelessWidget {
+  final StreetSegment segment;
+
+  const _ReportRuleButton({required this.segment});
+
+  /// Compute the geographic midpoint of the segment coordinates.
+  (double lat, double lon) get _midpoint {
+    if (segment.coordinates.isEmpty) return (0.0, 0.0);
+    final lons = segment.coordinates.map((c) => c[0]);
+    final lats = segment.coordinates.map((c) => c[1]);
+    final midLat = lats.reduce((a, b) => a + b) / lats.length;
+    final midLon = lons.reduce((a, b) => a + b) / lons.length;
+    return (midLat, midLon);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mid = _midpoint;
+    return TextButton.icon(
+      icon: const Icon(Icons.flag_rounded, size: 16),
+      label: const Text('Signaler une règle'),
+      style: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        textStyle: const TextStyle(fontSize: AppTextSize.md),
+      ),
+      onPressed: () => showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => ContributionSheet(
+          osmWayId: segment.osmWayIds.isNotEmpty ? segment.osmWayIds.first : 0,
+          streetName: segment.streetName,
+          cityId: segment.city,
+          lat: mid.$1,
+          lon: mid.$2,
         ),
       ),
     );
@@ -904,7 +1064,7 @@ class _StartSessionButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: AppTheme.restricted.withAlpha(26),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -928,8 +1088,10 @@ class _StartSessionButton extends StatelessWidget {
       child: FilledButton.icon(
         onPressed: () {
           if (hasSession) {
+            HapticFeedback.mediumImpact();
             sessionService.endSession();
-          } else if (freemiumService.isPremium) {
+          } else if (freemiumService.hasFullAccess) {
+            HapticFeedback.mediumImpact();
             sessionService.startSession(segment, viewTime);
           } else {
             PaywallSoft.show(
@@ -940,18 +1102,19 @@ class _StartSessionButton extends StatelessWidget {
             );
           }
         },
-        icon: Icon(hasSession ? Icons.stop_circle_outlined : Icons.play_circle_outline),
+        icon: Icon(
+            hasSession ? Icons.stop_circle_rounded : Icons.play_circle_outline),
         label: Text(
           hasSession ? 'Terminer la session' : 'Débuter une session',
           style: const TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 15,
+            fontSize: AppTextSize.bodyMd,
           ),
         ),
         style: FilledButton.styleFrom(
           backgroundColor: hasSession ? Colors.red[700] : AppTheme.primary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),

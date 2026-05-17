@@ -8,9 +8,9 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/services/freemium_service.dart';
 import 'core/services/iap_service.dart';
 import 'core/services/session_service.dart';
+import 'core/services/parking_notification_service.dart';
 import 'core/ads/ad_service.dart';
 import 'core/theme/app_theme.dart';
-import 'screens/map_screen.dart';
 import 'screens/splash_screen.dart';
 
 Future<void> main() async {
@@ -30,6 +30,7 @@ Future<void> main() async {
   await themeModeService.initialize();
   await freemiumService.initialize();
   await IAPService.instance.initialize();
+  await ParkingNotificationService.instance.initialize();
 
   runApp(const ParkSmartApp());
 }

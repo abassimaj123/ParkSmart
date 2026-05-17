@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/services/rule_engine.dart';
 import '../core/theme/app_theme.dart';
+import 'package:calcwise_core/calcwise_core.dart';
 
 class LayerFilterWidget extends StatelessWidget {
   final Map<ParkingColor, bool> filters;
@@ -39,7 +40,7 @@ class LayerFilterWidget extends StatelessWidget {
         enabled: true,
         label: 'Filtrer les zones de stationnement',
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           child: Container(
             width: 48,
             height: 48,
@@ -61,7 +62,7 @@ class LayerFilterWidget extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 Icon(
-                  Icons.layers_outlined,
+                  Icons.layers_rounded,
                   color: allActive ? AppTheme.primary : AppTheme.accent,
                   size: 22,
                 ),
@@ -82,7 +83,7 @@ class LayerFilterWidget extends StatelessWidget {
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: 11,
+                            fontSize: AppTextSize.xs,
                           ),
                         ),
                       ),
@@ -124,7 +125,7 @@ class _FilterSheetState extends State<_FilterSheet> {
       label: 'Parcomètre',
       description: 'Paiement requis pendant les heures affichées',
       color: AppTheme.meter,
-      icon: Icons.timer_outlined,
+      icon: Icons.timer_rounded,
     ),
     ParkingColor.restricted: _FilterInfo(
       label: 'Stationnement interdit',
@@ -160,15 +161,15 @@ class _FilterSheetState extends State<_FilterSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Container(
             width: 40,
             height: 4,
@@ -177,9 +178,9 @@ class _FilterSheetState extends State<_FilterSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Row(
               children: [
                 Text(
@@ -190,13 +191,11 @@ class _FilterSheetState extends State<_FilterSheet> {
                 ),
                 const Spacer(),
                 TextButton(
-                  onPressed:
-                      _allActive ? null : () => _toggleAll(true),
+                  onPressed: _allActive ? null : () => _toggleAll(true),
                   child: const Text('Tout afficher'),
                 ),
                 TextButton(
-                  onPressed:
-                      _noneActive ? null : () => _toggleAll(false),
+                  onPressed: _noneActive ? null : () => _toggleAll(false),
                   child: Text(
                     'Masquer tout',
                     style: TextStyle(
@@ -221,9 +220,9 @@ class _FilterSheetState extends State<_FilterSheet> {
               },
             );
           }),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -231,21 +230,23 @@ class _FilterSheetState extends State<_FilterSheet> {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: AppSpacing.mdPlus),
                 ),
                 child: const Text(
                   'Appliquer',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: AppTextSize.bodyLg,
                   ),
                 ),
               ),
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
+          SizedBox(
+              height: MediaQuery.of(context).padding.bottom + AppSpacing.md),
         ],
       ),
     );
@@ -285,14 +286,14 @@ class _FilterRow extends StatelessWidget {
       subtitle: Text(
         info.description,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppTextSize.sm,
           color: value ? const Color(0xFF475569) : const Color(0xFF94A3B8),
         ),
       ),
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: info.color,
+        activeThumbColor: info.color,
       ),
     );
   }

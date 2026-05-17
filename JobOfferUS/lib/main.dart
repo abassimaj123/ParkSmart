@@ -1,5 +1,11 @@
 import 'dart:ui';
-import 'package:calcwise_core/calcwise_core.dart' show themeModeService;
+import 'package:calcwise_core/calcwise_core.dart'
+    show
+        themeModeService,
+        CalcwiseAdService,
+        CalcwiseAdConfig,
+        PaywallSessionService,
+        CalcwiseAdFooter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,11 +13,26 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/freemium/freemium_service.dart';
-import 'core/ads/ad_service.dart';
+import 'core/freemium/iap_service.dart';
+import 'core/ads/ad_config.dart';
 import 'core/services/analytics_service.dart';
 import 'core/language/language_notifier.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/splash_screen.dart';
+
+final adService = CalcwiseAdService(
+  config: CalcwiseAdConfig(
+    bannerAndroid: AdConfig.bannerAndroid,
+    interstitialAndroid: AdConfig.interstitialAndroid,
+    rewardedAndroid: AdConfig.rewardedAndroid,
+    calcThreshold: 8,
+    cooldownMinutes: 5,
+  ),
+  freemium: freemiumService,
+  analytics: AnalyticsService.instance,
+);
+
+final paywallSession = PaywallSessionService(appKey: 'joboffer');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,8 +43,10 @@ void main() async {
     return true;
   };
   await MobileAds.instance.initialize();
-  await AdService.instance.initialize();
+  if (AdConfig.adsEnabled) await adService.initialize();
   await freemiumService.initialize();
+  await paywallSession.initialize();
+  await IAPService.instance.initialize();
   await AnalyticsService.instance.logAppOpen();
   await themeModeService.initialize();
 
@@ -35,6 +58,12 @@ void main() async {
     final savedLang = prefs.getString('language');
     isSpanishNotifier.value = (savedLang ?? systemLang) == 'es';
   }
+
+  CalcwiseAdFooter.configure(
+    adService: adService,
+    freemium: freemiumService,
+    onGetPremium: () => IAPService.instance.buy(),
+  );
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 

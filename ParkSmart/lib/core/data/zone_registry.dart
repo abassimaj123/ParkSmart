@@ -20,7 +20,6 @@ import '../models/parking_rule.dart';
 ///   → Segments précis (rue par rue) : géré par les mocks
 ///   → Déneigement : conditionnel (panneau clignotant), non affichable
 class ZoneRegistry {
-
   // ════════════════════════════════════════════════════════════════
   // RÈGLES — Parcomètres
   // ════════════════════════════════════════════════════════════════
@@ -34,13 +33,15 @@ class ZoneRegistry {
   static const _rushAM = ParkingRule(
     type: RuleType.noParking,
     days: [1, 2, 3, 4, 5],
-    from: '07:00', to: '09:00',
+    from: '07:00',
+    to: '09:00',
     note: 'Heure de pointe — interdit stationnement (7h-9h Lun-Ven)',
   );
   static const _rushPM = ParkingRule(
     type: RuleType.noParking,
     days: [1, 2, 3, 4, 5],
-    from: '16:00', to: '18:00',
+    from: '16:00',
+    to: '18:00',
     note: 'Heure de pointe — interdit stationnement (16h-18h Lun-Ven)',
   );
 
@@ -52,33 +53,39 @@ class ZoneRegistry {
   static const _meterVieuxQC = ParkingRule(
     type: RuleType.meter,
     days: [1, 2, 3, 4, 5, 6],
-    from: '09:00', to: '18:00',
+    from: '09:00',
+    to: '18:00',
     ratePerHour: 2.00,
     maxMinutes: 120,
     freeOnHoliday: true,
-    note: 'Parcomètre — 2,00 \$/h · Max 2h (Lun-Sam 9h-18h · gratuit jours fériés)',
+    note:
+        'Parcomètre — 2,00 \$/h · Max 2h (Lun-Sam 9h-18h · gratuit jours fériés)',
   );
 
   // Limoilou commercial (3e et 4e ave) : Lun-Sam 9h-18h, 1.50$/h, max 2h
   static const _meterLimoilou = ParkingRule(
     type: RuleType.meter,
     days: [1, 2, 3, 4, 5, 6],
-    from: '09:00', to: '18:00',
+    from: '09:00',
+    to: '18:00',
     ratePerHour: 1.50,
     maxMinutes: 120,
     freeOnHoliday: true,
-    note: 'Parcomètre — 1,50 \$/h · Max 2h (Lun-Sam 9h-18h · gratuit jours fériés)',
+    note:
+        'Parcomètre — 1,50 \$/h · Max 2h (Lun-Sam 9h-18h · gratuit jours fériés)',
   );
 
   // Vieux-Lévis (rue Racine, Saint-Joseph) : Lun-Sam 9h-17h, 1.00$/h, max 2h
   static const _meterVieuxLevis = ParkingRule(
     type: RuleType.meter,
     days: [1, 2, 3, 4, 5, 6],
-    from: '09:00', to: '17:00',
+    from: '09:00',
+    to: '17:00',
     ratePerHour: 1.00,
     maxMinutes: 120,
     freeOnHoliday: true,
-    note: 'Parcomètre — 1,00 \$/h · Max 2h (Lun-Sam 9h-17h · gratuit jours fériés)',
+    note:
+        'Parcomètre — 1,00 \$/h · Max 2h (Lun-Sam 9h-17h · gratuit jours fériés)',
   );
 
   // Montréal Ville-Marie (centre-ville) — horaires étendus depuis nov. 2023
@@ -86,17 +93,20 @@ class ZoneRegistry {
   static const _meterVilleMarieWeek = ParkingRule(
     type: RuleType.meter,
     days: [1, 2, 3, 4, 5],
-    from: '08:00', to: '23:00',
+    from: '08:00',
+    to: '23:00',
     ratePerHour: 4.25,
     maxMinutes: 300,
     freeOnHoliday: true,
-    note: 'Parcomètre — 4,25 \$/h · Max 5h (Lun-Ven 8h-23h · gratuit jours fériés)',
+    note:
+        'Parcomètre — 4,25 \$/h · Max 5h (Lun-Ven 8h-23h · gratuit jours fériés)',
   );
 
   static const _meterVilleMarieSat = ParkingRule(
     type: RuleType.meter,
     days: [6],
-    from: '09:00', to: '23:00',
+    from: '09:00',
+    to: '23:00',
     ratePerHour: 4.25,
     maxMinutes: 300,
     freeOnHoliday: true,
@@ -106,33 +116,39 @@ class ZoneRegistry {
   static const _meterVilleMarieDim = ParkingRule(
     type: RuleType.meter,
     days: [7],
-    from: '13:00', to: '18:00',
+    from: '13:00',
+    to: '18:00',
     ratePerHour: 4.25,
     maxMinutes: 300,
     freeOnHoliday: true,
-    note: 'Parcomètre — 4,25 \$/h · Max 5h (Dim 13h-18h · gratuit jours fériés)',
+    note:
+        'Parcomètre — 4,25 \$/h · Max 5h (Dim 13h-18h · gratuit jours fériés)',
   );
 
   // Montréal avenue du Parc / Milton Park : Lun-Ven 9h-21h, Sam 9h-18h, 2.50$/h
   static const _meterParcMilton = ParkingRule(
     type: RuleType.meter,
     days: [1, 2, 3, 4, 5, 6],
-    from: '09:00', to: '21:00',
+    from: '09:00',
+    to: '21:00',
     ratePerHour: 2.50,
     maxMinutes: 120,
     freeOnHoliday: true,
-    note: 'Parcomètre — 2,50 \$/h · Max 2h (Lun-Sam 9h-21h · gratuit jours fériés)',
+    note:
+        'Parcomètre — 2,50 \$/h · Max 2h (Lun-Sam 9h-21h · gratuit jours fériés)',
   );
 
   // Montréal Rosemont commercial / Petite-Italie : Lun-Sam 9h-18h, 2.00$/h
   static const _meterRosemont = ParkingRule(
     type: RuleType.meter,
     days: [1, 2, 3, 4, 5, 6],
-    from: '09:00', to: '18:00',
+    from: '09:00',
+    to: '18:00',
     ratePerHour: 2.00,
     maxMinutes: 120,
     freeOnHoliday: true,
-    note: 'Parcomètre — 2,00 \$/h · Max 2h (Lun-Sam 9h-18h · gratuit jours fériés)',
+    note:
+        'Parcomètre — 2,00 \$/h · Max 2h (Lun-Sam 9h-18h · gratuit jours fériés)',
   );
 
   // ════════════════════════════════════════════════════════════════
@@ -143,7 +159,8 @@ class ZoneRegistry {
   static const _permitPlateau = ParkingRule(
     type: RuleType.permitOnly,
     days: [1, 2, 3, 4, 5, 6, 7],
-    from: '09:00', to: '23:00',
+    from: '09:00',
+    to: '23:00',
     permitZone: 'Plateau-Mont-Royal',
     note: 'SRRR — interdit sans vignette (tous les jours 9h-23h)',
   );
@@ -152,7 +169,8 @@ class ZoneRegistry {
   static const _permitMileEnd = ParkingRule(
     type: RuleType.permitOnly,
     days: [1, 2, 3, 4, 5, 6],
-    from: '09:00', to: '23:00',
+    from: '09:00',
+    to: '23:00',
     permitZone: 'Mile-End',
     note: 'SRRR — interdit sans vignette (Lun-Sam 9h-23h)',
   );
@@ -160,7 +178,8 @@ class ZoneRegistry {
   static const _permitCDN = ParkingRule(
     type: RuleType.permitOnly,
     days: [1, 2, 3, 4, 5],
-    from: '08:00', to: '18:00',
+    from: '08:00',
+    to: '18:00',
     permitZone: 'CDN-NDG-Outremont',
     note: 'SRRR — interdit sans vignette (Lun-Ven 8h-18h)',
   );
@@ -172,7 +191,8 @@ class ZoneRegistry {
   static const _permitQC = ParkingRule(
     type: RuleType.permitOrLimit,
     days: [1, 2, 3, 4, 5],
-    from: '07:00', to: '18:00',
+    from: '07:00',
+    to: '18:00',
     maxMinutes: 120,
     permitZone: 'Québec-Vignette',
     note: '2h max sans vignette — illimité avec vignette (Lun-Ven 7h-18h)',
@@ -223,7 +243,6 @@ class ZoneRegistry {
   // ════════════════════════════════════════════════════════════════
 
   static final List<ParkingZone> _capitaleZones = [
-
     // ── Parcomètres Vieux-Québec / Grande-Allée / Haute-Ville ────────────────
     // Secteur intra-muros + boulevard Grande-Allée : tarif centre-ville
     ParkingZone(
@@ -289,7 +308,6 @@ class ZoneRegistry {
   // ════════════════════════════════════════════════════════════════
 
   static final List<ParkingZone> _montrealZones = [
-
     // ══════════════════════════════════════════════════════════════════════════
     // ARTÈRES — Heures de pointe (couloirs étroits, priorité max → listés en 1er)
     // Ces zones sont intentionnellement ÉTROITES (~150 m de large) pour ne
@@ -440,8 +458,10 @@ class ZoneRegistry {
   static List<List<double>> _rect(
           double lonW, double latS, double lonE, double latN) =>
       [
-        [lonW, latS], [lonE, latS],
-        [lonE, latN], [lonW, latN],
+        [lonW, latS],
+        [lonE, latS],
+        [lonE, latN],
+        [lonW, latN],
         [lonW, latS],
       ];
 }

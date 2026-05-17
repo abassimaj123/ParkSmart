@@ -10,22 +10,23 @@ class OfferEngine {
 
   // ── Federal tax constants 2025 ────────────────────────────────────────────
   static const double _stdDeductionSingle = 15000.0; // 2025
-  static const double _ssWageBase = 176100.0;        // SS wage base 2025
-  static const double _ssRate = 0.062;               // 6.2%
-  static const double _medicareRate = 0.0145;        // 1.45%
+  static const double _ssWageBase = 176100.0; // SS wage base 2025
+  static const double _ssRate = 0.062; // 6.2%
+  static const double _medicareRate = 0.0145; // 1.45%
   static const double _additionalMedicareRate = 0.009; // 0.9% over $200k
 
   /// Federal income tax (single filer, standard deduction, 2025 brackets).
   static double federalTax(double grossIncome) {
-    final taxable = (grossIncome - _stdDeductionSingle).clamp(0.0, double.infinity);
+    final taxable =
+        (grossIncome - _stdDeductionSingle).clamp(0.0, double.infinity);
     return _applyFederalBrackets(taxable);
   }
 
   static double _applyFederalBrackets(double taxable) {
     // 2025 single brackets
     const brackets = [
-      (11925.0,  0.10),
-      (48475.0,  0.12),
+      (11925.0, 0.10),
+      (48475.0, 0.12),
       (103350.0, 0.22),
       (197300.0, 0.24),
       (250525.0, 0.32),
@@ -47,8 +48,8 @@ class OfferEngine {
   static double ficaTax(double grossIncome) {
     final ss = grossIncome.clamp(0, _ssWageBase) * _ssRate;
     final medicare = grossIncome * _medicareRate;
-    final addlMedicare =
-        (grossIncome - 200000).clamp(0.0, double.infinity) * _additionalMedicareRate;
+    final addlMedicare = (grossIncome - 200000).clamp(0.0, double.infinity) *
+        _additionalMedicareRate;
     return ss + medicare + addlMedicare;
   }
 
@@ -107,13 +108,18 @@ class OfferEngine {
   }
 
   /// After-tax value of annual bonus.
-  static double bonusAfterTax(double annualSalary, double bonusPct, String stateCode) {
+  static double bonusAfterTax(
+      double annualSalary, double bonusPct, String stateCode) {
     if (bonusPct <= 0) return 0;
     final bonus = annualSalary * (bonusPct / 100);
     // Marginal tax on bonus ≈ same as top bracket of combined salary
     final totalInc = annualSalary + bonus;
-    final taxOnTotal = federalTax(totalInc) + stateTax(totalInc, stateCode) + ficaTax(totalInc);
-    final taxOnSalary = federalTax(annualSalary) + stateTax(annualSalary, stateCode) + ficaTax(annualSalary);
+    final taxOnTotal = federalTax(totalInc) +
+        stateTax(totalInc, stateCode) +
+        ficaTax(totalInc);
+    final taxOnSalary = federalTax(annualSalary) +
+        stateTax(annualSalary, stateCode) +
+        ficaTax(annualSalary);
     return bonus - (taxOnTotal - taxOnSalary);
   }
 
@@ -161,7 +167,8 @@ class OfferEngine {
   }) {
     return netTakeHome(salary, stateCode) +
         bonusAfterTax(salary, bonusPct, stateCode) +
-        k401kMatchValue(salary, matchPct: k401kMatchPct, upToPct: k401kUpToPct) +
+        k401kMatchValue(salary,
+            matchPct: k401kMatchPct, upToPct: k401kUpToPct) +
         benefits +
         ptoValue +
         rsuValue -
@@ -205,12 +212,13 @@ class OfferEngine {
         matchPct: o.k401kMatchPct, upToPct: o.k401kUpToPct);
     final health = o.healthInsuranceSavings + o.dentalVisionSavings;
     final pto = ptoValue(o.baseSalary, o.ptoDays);
-    final commute = commuteCost(
-        milesOneWay: o.commuteMilesPerDay, isRemote: o.isRemote);
+    final commute =
+        commuteCost(milesOneWay: o.commuteMilesPerDay, isRemote: o.isRemote);
     final colAdj = CityColData.adjust(
         salary: takeHome, fromCity: o.city, toCity: 'National Average');
 
-    final totalComp = takeHome + bonusNet + match + health + pto + o.annualRsuValue - commute;
+    final totalComp =
+        takeHome + bonusNet + match + health + pto + o.annualRsuValue - commute;
 
     final projection = fiveYearProjection(
       baseSalary: o.baseSalary,
@@ -254,7 +262,8 @@ class OfferEngine {
     return {
       'takeHome': w(a.netTakeHome, b.netTakeHome),
       'bonus': w(a.bonusAfterTax, b.bonusAfterTax),
-      'benefits': w(a.k401kMatch + a.healthBenefits, b.k401kMatch + b.healthBenefits),
+      'benefits':
+          w(a.k401kMatch + a.healthBenefits, b.k401kMatch + b.healthBenefits),
       'pto': w(a.ptoValue, b.ptoValue),
       'rsu': w(a.annualRsuValue, b.annualRsuValue),
       'commute': w(a.commuteCost, b.commuteCost, lowerIsBetter: true),

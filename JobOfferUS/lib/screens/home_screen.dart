@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:calcwise_core/calcwise_core.dart';
@@ -5,11 +6,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/engines/offer_engine.dart';
 import '../core/freemium/freemium_service.dart';
 import '../core/language/language_notifier.dart';
+import '../core/freemium/iap_service.dart';
+import '../core/services/analytics_service.dart';
 import '../core/models/job_offer.dart';
 import '../core/theme/app_theme.dart';
 import '../widgets/offer_form_card.dart';
 import '../widgets/paywall_hard.dart';
+import '../main.dart' show paywallSession;
 import 'comparison_screen.dart';
+import 'history_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,46 +24,93 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _tabIndex = 0;
+  final _formKey = GlobalKey<FormState>();
+
   JobOffer _offerA = const JobOffer(
-      label: 'Offer A', baseSalary: 0, stateCode: 'CA',
+      label: 'Offer A',
+      baseSalary: 0,
+      stateCode: 'CA',
       city: 'San Francisco, CA');
   JobOffer _offerB = const JobOffer(
-      label: 'Offer B', baseSalary: 0, stateCode: 'TX',
-      city: 'Austin, TX');
+      label: 'Offer B', baseSalary: 0, stateCode: 'TX', city: 'Austin, TX');
+
+  Timer? _debounce;
 
   bool get _canCompare => _offerA.baseSalary > 0 && _offerB.baseSalary > 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) async => await paywallSession.recordSession());
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _debouncedCompare() {
+    HapticFeedback.mediumImpact();
+    if (!(_formKey.currentState?.validate() ?? true)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isSpanishNotifier.value
+              ? 'Por favor corrige los errores'
+              : 'Please fix errors before comparing'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    _debounce?.cancel();
+    _debounce = Timer(AppDuration.page, _compare);
   }
 
   void _compare() async {
     if (!_canCompare) return;
     await freemiumService.incrementCalcCount();
     if (!mounted) return;
-    if (freemiumService.showSoftGate) { _showPaywall(); return; }
+    if (freemiumService.showSoftGate) {
+      _showPaywall();
+      return;
+    }
+    AnalyticsService.instance.logCalculationCompleted(params: {
+      'salary_a': _offerA.baseSalary.round(),
+      'salary_b': _offerB.baseSalary.round(),
+    });
     final result = OfferEngine.compare(_offerA, _offerB);
     if (!mounted) return;
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => ComparisonScreen(
-          offerA: _offerA, offerB: _offerB, result: result),
+    Navigator.of(context).push(PageRouteBuilder(
+      pageBuilder: (_, __, ___) =>
+          ComparisonScreen(offerA: _offerA, offerB: _offerB, result: result),
+      transitionsBuilder: (_, anim, __, child) =>
+          FadeTransition(opacity: anim, child: child),
+      transitionDuration: AppDuration.base,
     ));
   }
 
   void _showPaywall() {
     final isSp = isSpanishNotifier.value;
+    AnalyticsService.instance.logPaywallViewed('soft_gate_home');
     showModalBottomSheet(
-      context: context, isScrollControlled: true,
+      context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => PaywallHard(
         isSpanish: isSp,
         onPurchase: () async {
           Navigator.pop(context);
-          await freemiumService.unlockPremium();
+          AnalyticsService.instance.logPaywallConverted('soft_gate_home');
+          IAPService.instance.buy();
           _compare();
         },
-        onDismiss: () => Navigator.pop(context),
+        onDismiss: () {
+          AnalyticsService.instance.logPaywallDismissed();
+          Navigator.pop(context);
+        },
       ),
     );
   }
@@ -75,122 +127,234 @@ class _HomeScreenState extends State<HomeScreen> {
     ));
     return ValueListenableBuilder<bool>(
       valueListenable: isSpanishNotifier,
-      builder: (_, isSp, __) => Scaffold(
-        appBar: _appBar(isSp),
-        body: _body(isSp),
-        bottomNavigationBar: _cta(isSp),
-      ),
+      builder: (_, isSp, __) {
+        final screens = [
+          _ComparisonTab(
+            formKey: _formKey,
+            offerA: _offerA,
+            offerB: _offerB,
+            canCompare: _canCompare,
+            isSp: isSp,
+            onOfferAChanged: (o) => setState(() => _offerA = o),
+            onOfferBChanged: (o) => setState(() => _offerB = o),
+            onCompare: _debouncedCompare,
+            appBar: _appBar(isSp),
+          ),
+          const HistoryScreen(),
+        ];
+
+        return Scaffold(
+          body: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: IndexedStack(index: _tabIndex, children: screens),
+          ),
+          bottomNavigationBar: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CalcwiseAdFooter(),
+              NavigationBar(
+                selectedIndex: _tabIndex,
+                onDestinationSelected: (i) => setState(() => _tabIndex = i),
+                destinations: [
+                  NavigationDestination(
+                    icon: const Icon(Icons.compare_arrows_rounded),
+                    selectedIcon: const Icon(Icons.compare_arrows_rounded),
+                    label: isSp ? 'Comparar' : 'Compare',
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.bookmark_border_rounded),
+                    selectedIcon: const Icon(Icons.bookmark_rounded),
+                    label: isSp ? 'Historial' : 'History',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   PreferredSizeWidget _appBar(bool isSp) {
     final ct = CalcwiseTheme.of(context);
     return AppBar(
-    elevation: 0,
-    title: Row(children: [
-      Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(
-          gradient: AppTheme.ctaGradient,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(
-            color: AppTheme.primary.withOpacity(0.4),
-            blurRadius: 12, offset: const Offset(0, 3))],
-        ),
-        child: const Icon(Icons.compare_arrows_rounded,
-            color: Colors.white, size: 18),
-      ),
-      const SizedBox(width: 10),
-      Flexible(
-        child: RichText(
-          overflow: TextOverflow.ellipsis,
-          text: TextSpan(children: [
-            TextSpan(text: 'Job Offer',
-                style: TextStyle(color: ct.textPrimary,
-                    fontSize: 19, fontWeight: FontWeight.w700,
-                    letterSpacing: -0.4)),
-            TextSpan(text: ' US',
-                style: TextStyle(color: ct.accent,
-                    fontSize: 19, fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4)),
-          ]),
-        ),
-      ),
-    ]),
-    actions: [
-      GestureDetector(
-        onTap: () async {
-          final next = !isSpanishNotifier.value;
-          isSpanishNotifier.value = next;
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('language', next ? 'es' : 'en');
-        },
-        child: Container(
-          margin: const EdgeInsets.only(right: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      title: Row(children: [
+        Container(
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
-            color: ct.surfaceHigh,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: ct.cardBorder),
+            gradient: AppTheme.ctaGradient,
+            borderRadius: BorderRadius.circular(AppRadius.mdPlus),
+            boxShadow: [
+              BoxShadow(
+                  color: AppTheme.primary.withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3))
+            ],
           ),
-          child: Text(isSp ? '🇺🇸 EN' : '🇲🇽 ES',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
-                  color: ct.textPrimary)),
+          child: const Icon(Icons.compare_arrows_rounded,
+              color: Colors.white, size: 18),
         ),
-      ),
-      IconButton(
-        icon: Icon(Icons.settings_outlined, color: ct.textPrimary),
-        onPressed: () => Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const SettingsScreen(),
-            transitionsBuilder: (_, anim, __, child) =>
-                FadeTransition(opacity: anim, child: child),
-            transitionDuration: const Duration(milliseconds: 250),
-          ),
-        ),
-      ),
-    ],
-  );
-  }
-
-  Widget _body(bool isSp) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ── Hero ──────────────────────────────────────────────────────
-          CalcwiseStaggerItem(index: 0, child: _HeroBanner(isSp: isSp)),
-          const SizedBox(height: 20),
-          ValueListenableBuilder<bool>(
-            valueListenable: freemiumService.isPremiumNotifier,
-            builder: (_, isPremium, __) => Column(children: [
-              CalcwiseStaggerItem(
-                index: 1,
-                child: OfferFormCard(
-                isOfferA: true, value: _offerA,
-                isPremium: isPremium, isSpanish: isSp,
-                onChanged: (o) => setState(() => _offerA = o),
-              )),
-              const SizedBox(height: 16),
-              _VsDivider(),
-              const SizedBox(height: 16),
-              CalcwiseStaggerItem(
-                index: 2,
-                child: OfferFormCard(
-                isOfferA: false, value: _offerB,
-                isPremium: isPremium, isSpanish: isSp,
-                onChanged: (o) => setState(() => _offerB = o),
-              )),
+        const SizedBox(width: 8),
+        Flexible(
+          child: RichText(
+            overflow: TextOverflow.ellipsis,
+            text: TextSpan(children: [
+              TextSpan(
+                  text: 'Job Offer',
+                  style: TextStyle(
+                      color: ct.textPrimary,
+                      fontSize: AppTextSize.subtitleSm,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.4)),
+              TextSpan(
+                  text: ' US',
+                  style: TextStyle(
+                      color: ct.accent,
+                      fontSize: AppTextSize.subtitleSm,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4)),
             ]),
           ),
-        ],
-      ),
+        ),
+      ]),
+      actions: [
+        Tooltip(
+          message: isSp ? 'Switch to English' : 'Cambiar a Español',
+          child: Semantics(
+            label: isSp
+                ? 'Language: Spanish. Tap to switch to English'
+                : 'Language: English. Tap to switch to Spanish',
+            button: true,
+            child: GestureDetector(
+              onTap: () async {
+                final next = !isSpanishNotifier.value;
+                isSpanishNotifier.value = next;
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('language', next ? 'es' : 'en');
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                decoration: BoxDecoration(
+                  color: ct.surfaceHigh,
+                  borderRadius: BorderRadius.circular(AppRadius.mdPlus),
+                  border: Border.all(color: ct.cardBorder),
+                ),
+                child: Text(isSp ? '🇺🇸 EN' : '🇲🇽 ES',
+                    style: TextStyle(
+                        fontSize: AppTextSize.sm,
+                        fontWeight: FontWeight.w600,
+                        color: ct.textPrimary)),
+              ),
+            ),
+          ),
+        ),
+        CalcwiseAppBarActions(
+          freemium: freemiumService,
+          session: paywallSession,
+          onSettings: () => Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => const SettingsScreen(),
+              transitionsBuilder: (_, anim, __, child) =>
+                  FadeTransition(opacity: anim, child: child),
+              transitionDuration: AppDuration.base,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Comparison tab widget ─────────────────────────────────────────────────────
+
+class _ComparisonTab extends StatelessWidget {
+  final GlobalKey<FormState> formKey;
+  final JobOffer offerA;
+  final JobOffer offerB;
+  final bool canCompare;
+  final bool isSp;
+  final ValueChanged<JobOffer> onOfferAChanged;
+  final ValueChanged<JobOffer> onOfferBChanged;
+  final VoidCallback onCompare;
+  final PreferredSizeWidget appBar;
+
+  const _ComparisonTab({
+    required this.formKey,
+    required this.offerA,
+    required this.offerB,
+    required this.canCompare,
+    required this.isSp,
+    required this.onOfferAChanged,
+    required this.onOfferBChanged,
+    required this.onCompare,
+    required this.appBar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: appBar,
+      body: _body(context),
+      bottomNavigationBar: _cta(context),
     );
   }
 
-  Widget _cta(bool isSp) {
+  Widget _body(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Form(
+            key: formKey,
+            child: CalcwisePageEntrance(
+                child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Hero ──────────────────────────────────────────────────────
+                CalcwiseStaggerItem(index: 0, child: _HeroBanner(isSp: isSp)),
+                const SizedBox(height: 24),
+                ValueListenableBuilder<bool>(
+                  valueListenable: freemiumService.isPremiumNotifier,
+                  builder: (_, isPremium, __) => Column(children: [
+                    CalcwiseStaggerItem(
+                        index: 1,
+                        child: OfferFormCard(
+                          isOfferA: true,
+                          value: offerA,
+                          isPremium: isPremium,
+                          isSpanish: isSp,
+                          onChanged: onOfferAChanged,
+                        )),
+                    const SizedBox(height: 16),
+                    _VsDivider(),
+                    const SizedBox(height: 16),
+                    CalcwiseStaggerItem(
+                        index: 2,
+                        child: OfferFormCard(
+                          isOfferA: false,
+                          value: offerB,
+                          isPremium: isPremium,
+                          isSpanish: isSp,
+                          onChanged: onOfferBChanged,
+                        )),
+                  ]),
+                ),
+              ],
+            )), // CalcwisePageEntrance closes
+          ), // Form closes
+        ),
+      ), // ConstrainedBox + Center closes
+    );
+  }
+
+  Widget _cta(BuildContext context) {
     final bottom = MediaQuery.of(context).padding.bottom;
     final ct = CalcwiseTheme.of(context);
     return Container(
@@ -199,44 +363,63 @@ class _HomeScreenState extends State<HomeScreen> {
         color: ct.surface,
         border: Border(top: BorderSide(color: ct.cardBorder)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.3),
-              blurRadius: 20, offset: const Offset(0, -4)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, -4)),
         ],
       ),
       child: GestureDetector(
-        onTap: _canCompare ? _compare : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: _canCompare ? AppTheme.ctaGradient : LinearGradient(
-              colors: [
-                AppTheme.primary.withOpacity(0.3),
-                AppTheme.offerBDeep.withOpacity(0.3),
+        onTap: canCompare ? onCompare : null,
+        child: AnimatedSwitcher(
+          duration: AppDuration.base,
+          switchInCurve: Curves.easeOut,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          ),
+          child: Container(
+            key: ValueKey<bool>(canCompare),
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: canCompare
+                  ? AppTheme.ctaGradient
+                  : LinearGradient(
+                      colors: [
+                        AppTheme.primary.withValues(alpha: 0.3),
+                        AppTheme.offerBDeep.withValues(alpha: 0.3),
+                      ],
+                    ),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              boxShadow: canCompare ? AppTheme.ctaShadow : [],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.compare_arrows_rounded,
+                    color: canCompare
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.35),
+                    size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  isSp ? 'Comparar ofertas' : 'Compare Offers',
+                  style: TextStyle(
+                    color: canCompare
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.35),
+                    fontSize: AppTextSize.bodyXl,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: _canCompare ? AppTheme.ctaShadow : [],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.compare_arrows_rounded,
-                  color: _canCompare
-                      ? Colors.white
-                      : Colors.white.withOpacity(0.35),
-                  size: 22),
-              const SizedBox(width: 10),
-              Text(
-                isSp ? 'Comparar ofertas' : 'Compare Offers',
-                style: TextStyle(
-                  color: _canCompare
-                      ? Colors.white
-                      : Colors.white.withOpacity(0.35),
-                  fontSize: 17, fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -258,8 +441,10 @@ class _HeroBanner extends StatelessWidget {
         gradient: AppTheme.heroGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF3730A3).withOpacity(0.4),
-              blurRadius: 28, offset: const Offset(0, 8)),
+          BoxShadow(
+              color: const Color(0xFF3730A3).withValues(alpha: 0.4),
+              blurRadius: 28,
+              offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -273,42 +458,49 @@ class _HeroBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.2),
+                color: AppTheme.accent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: const [
                 Icon(Icons.verified_rounded, color: AppTheme.accent, size: 13),
                 SizedBox(width: 4),
-                Text('2025', style: TextStyle(
-                    color: AppTheme.accent, fontSize: 12,
-                    fontWeight: FontWeight.w700)),
+                Text('2025',
+                    style: TextStyle(
+                        color: AppTheme.accent,
+                        fontSize: AppTextSize.sm,
+                        fontWeight: FontWeight.w700)),
               ]),
             ),
           ]),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text(
-            isSp ? 'Compara tu compensación real' : 'Know your true compensation',
+            isSp
+                ? 'Compara tu compensación real'
+                : 'Know your true compensation',
             style: const TextStyle(
-              color: Colors.white, fontSize: 22,
-              fontWeight: FontWeight.w800, letterSpacing: -0.4,
+              color: Colors.white,
+              fontSize: AppTextSize.titleMd,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.4,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             isSp
                 ? 'Salario neto, impuestos, beneficios y más'
                 : 'After-tax salary, benefits, commute & more',
             style: TextStyle(
-                color: Colors.white.withOpacity(0.72), fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.72),
+                fontSize: AppTextSize.body,
                 height: 1.4),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Wrap(spacing: 8, runSpacing: 6, children: [
             _HChip(isSp ? '51 estados' : '51 States'),
             _HChip(isSp ? '50+ ciudades' : '50+ Cities'),
             _HChip('FICA · IRS 2025'),
             _HChip(isSp ? '★ 5 años' : '★ 5-yr',
-                color: AppTheme.accent.withOpacity(0.25)),
+                color: AppTheme.accent.withValues(alpha: 0.25)),
           ]),
         ],
       ),
@@ -324,15 +516,18 @@ class _LetterBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 36, height: 36,
+      width: 36,
+      height: 36,
       decoration: BoxDecoration(
-        color: bg.withOpacity(0.2),
+        color: bg.withValues(alpha: 0.2),
         shape: BoxShape.circle,
-        border: Border.all(color: bg.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: bg.withValues(alpha: 0.5), width: 1.5),
       ),
       child: Center(
         child: Text(l,
-            style: TextStyle(color: bg, fontSize: 16,
+            style: TextStyle(
+                color: bg,
+                fontSize: AppTextSize.bodyLg,
                 fontWeight: FontWeight.w800)),
       ),
     );
@@ -349,13 +544,14 @@ class _HChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color ?? Colors.white.withOpacity(0.12),
+        color: color ?? Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
       ),
       child: Text(t,
           style: TextStyle(
-              color: Colors.white.withOpacity(0.88), fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.88),
+              fontSize: AppTextSize.sm,
               fontWeight: FontWeight.w500)),
     );
   }
@@ -367,37 +563,48 @@ class _VsDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Expanded(child: Container(height: 1.5,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.transparent, AppTheme.offerADeep],
-            ),
-          ))),
-      const SizedBox(width: 10),
+      Expanded(
+          child: Container(
+              height: 1.5,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.transparent, AppTheme.offerADeep],
+                ),
+              ))),
+      const SizedBox(width: 8),
       Container(
-        width: 46, height: 46,
+        width: 46,
+        height: 46,
         decoration: BoxDecoration(
           gradient: AppTheme.ctaGradient,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(
-            color: AppTheme.primary.withOpacity(0.4),
-            blurRadius: 16, offset: const Offset(0, 4),
-          )],
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primary.withValues(alpha: 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
         child: const Center(
-          child: Text('VS', style: TextStyle(
-            color: Colors.white, fontSize: 13,
-            fontWeight: FontWeight.w900, letterSpacing: 1.5,
-          )),
+          child: Text('VS',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: AppTextSize.md,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+              )),
         ),
       ),
-      const SizedBox(width: 10),
-      Expanded(child: Container(height: 1.5,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppTheme.offerBDeep, Colors.transparent],
-            ),
-          ))),
+      const SizedBox(width: 8),
+      Expanded(
+          child: Container(
+              height: 1.5,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.offerBDeep, Colors.transparent],
+                ),
+              ))),
     ]);
   }
 }

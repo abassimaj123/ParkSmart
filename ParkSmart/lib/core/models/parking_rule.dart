@@ -135,7 +135,9 @@ class ParkingRule {
   /// Ex. "Jours pairs", "Mois impairs", "" si aucune parité.
   String get parityLabel {
     if (dayParity != null) {
-      return dayParity == 0 ? 'Jours pairs (2, 4, 6…)' : 'Jours impairs (1, 3, 5…)';
+      return dayParity == 0
+          ? 'Jours pairs (2, 4, 6…)'
+          : 'Jours impairs (1, 3, 5…)';
     }
     if (monthParity != null) {
       return monthParity == 0
@@ -152,8 +154,19 @@ class ParkingRule {
   String get monthLabel {
     if (monthFrom == null || monthTo == null) return '';
     const names = [
-      '', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun',
-      'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc',
+      '',
+      'Jan',
+      'Fév',
+      'Mar',
+      'Avr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Aoû',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Déc',
     ];
     return '${names[monthFrom!]}–${names[monthTo!]}';
   }

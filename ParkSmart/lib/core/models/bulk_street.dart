@@ -11,7 +11,8 @@
 class BulkStreet {
   final int osmWayId;
   final String name;
-  final String city; // identifiant stable de ville : 'quebec' | 'levis' | 'montreal'
+  final String
+      city; // identifiant stable de ville : 'quebec' | 'levis' | 'montreal'
 
   /// Géométrie du tronçon : [[longitude, latitude], ...]
   /// Coordonnées à 5 décimales (≈ 1 m de précision, suffisant pour l'affichage).

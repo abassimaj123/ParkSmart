@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import '../services/saved_spot_service.dart';
 
 class DatabaseHelper {
   DatabaseHelper._();
@@ -15,11 +16,9 @@ class DatabaseHelper {
     final p = join(await getDatabasesPath(), 'park_smart.db');
     return openDatabase(
       p,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
-      onUpgrade: (db, oldVersion, newVersion) async {
-        // Future schema migrations go here
-      },
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -36,6 +35,13 @@ class DatabaseHelper {
         created_at TEXT NOT NULL
       )
     ''');
+    await SavedSpotService.ensureTable(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await SavedSpotService.ensureTable(db);
+    }
   }
 
   Future<void> insertHistory(Map<String, dynamic> row) async {

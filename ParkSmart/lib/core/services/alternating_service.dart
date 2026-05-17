@@ -13,6 +13,8 @@ import '../models/street_segment.dart';
 /// ## Règle universelle pour ces rues
 ///   Mois impairs (Jan, Mar, Mai, Jul, Sep, Nov) → côté pair INTERDIT
 ///   Mois pairs  (Fév, Avr, Jun, Aoû, Oct, Déc) → côté impair INTERDIT
+@Deprecated(
+    'Use CityParkingService instead. Will be removed after Phase 0 validation.')
 class AlternatingService {
   static final AlternatingService _instance = AlternatingService._();
   factory AlternatingService() => _instance;
@@ -23,7 +25,7 @@ class AlternatingService {
   bool _loaded = false;
 
   // Grille 0.001° (~100 m), seuil de proximité ~80 m
-  static const double _cell    = 0.001;
+  static const double _cell = 0.001;
   static const double _thresh2 = 5.0e-7; // ~80 m
 
   // Règles communes à tous les segments alternés
@@ -46,7 +48,8 @@ class AlternatingService {
     if (_loaded) return;
 
     try {
-      final raw  = await rootBundle.loadString('assets/alternating_montreal.json');
+      final raw =
+          await rootBundle.loadString('assets/alternating_montreal.json');
       final data = jsonDecode(raw) as List<dynamic>;
 
       for (final item in data) {
@@ -60,7 +63,8 @@ class AlternatingService {
         }
       }
       _loaded = true;
-      debugPrint('Alternating loaded: ${_segs.length} residential alternating streets');
+      debugPrint(
+          'Alternating loaded: ${_segs.length} residential alternating streets');
     } catch (e) {
       debugPrint('Alternating load failed: $e');
       _loaded = false;
@@ -74,7 +78,7 @@ class AlternatingService {
     final gi = (lat / _cell).floor();
     final gj = (lon / _cell).floor();
 
-    int?   bestIdx;
+    int? bestIdx;
     double bestD2 = double.infinity;
 
     for (int di = -1; di <= 1; di++) {
@@ -86,28 +90,31 @@ class AlternatingService {
             final dl = pt[1] - lat;
             final dx = pt[0] - lon;
             final d2 = dl * dl + dx * dx;
-            if (d2 < bestD2) { bestD2 = d2; bestIdx = idx; }
+            if (d2 < bestD2) {
+              bestD2 = d2;
+              bestIdx = idx;
+            }
           }
         }
       }
     }
 
     if (bestIdx == null || bestD2 > _thresh2) return null;
-    return _segs[bestIdx!].toSegment();
+    return _segs[bestIdx].toSegment();
   }
 
   static String _cellKey(double lat, double lon) =>
       '${(lat / _cell).floor()},${(lon / _cell).floor()}';
 
-  int  get segmentCount => _segs.length;
-  bool get isLoaded     => _loaded;
+  int get segmentCount => _segs.length;
+  bool get isLoaded => _loaded;
 }
 
 // ── Modèle interne ─────────────────────────────────────────────────────────
 
 class _AltSegment {
   final String name;
-  final int    wayId;
+  final int wayId;
   final String zone;
   final List<List<double>> coords; // [[lon, lat], ...]
 
@@ -119,25 +126,26 @@ class _AltSegment {
   });
 
   factory _AltSegment.fromJson(Map<String, dynamic> json) => _AltSegment(
-    name:   json['n'] as String,
-    wayId:  json['w'] as int,
-    zone:   json['z'] as String,
-    coords: (json['c'] as List<dynamic>)
-        .map((p) => (p as List<dynamic>).map((v) => (v as num).toDouble()).toList())
-        .toList(),
-  );
+        name: json['n'] as String,
+        wayId: json['w'] as int,
+        zone: json['z'] as String,
+        coords: (json['c'] as List<dynamic>)
+            .map((p) =>
+                (p as List<dynamic>).map((v) => (v as num).toDouble()).toList())
+            .toList(),
+      );
 
   StreetSegment toSegment() => StreetSegment(
-    id:          'alt-${wayId}',
-    streetName:  name,
-    city:        'Montreal',
-    side:        'Les deux côtés',
-    osmWayIds:   [wayId],
-    coordinates: coords,
-    rules:       AlternatingService._rules,
-    confidence:  0.80,
-    sourceDate:  '2026-01-01',
-    sources:     [DataSource.bylaw],
-    notes:       'Stationnement alterné par mois — $zone',
-  );
+        id: 'alt-$wayId',
+        streetName: name,
+        city: 'Montreal',
+        side: 'Les deux côtés',
+        osmWayIds: [wayId],
+        coordinates: coords,
+        rules: AlternatingService._rules,
+        confidence: 0.80,
+        sourceDate: '2026-01-01',
+        sources: [DataSource.bylaw],
+        notes: 'Stationnement alterné par mois — $zone',
+      );
 }

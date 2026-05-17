@@ -17,11 +17,14 @@ class ParkingSession {
       maxMinutes != null ? maxMinutes! - elapsed.inMinutes : null;
 
   bool get isNearingLimit =>
-      minutesRemaining != null && minutesRemaining! <= 30 && minutesRemaining! > 0;
+      minutesRemaining != null &&
+      minutesRemaining! <= 30 &&
+      minutesRemaining! > 0;
 
-  bool get isOverLimit =>
-      minutesRemaining != null && minutesRemaining! <= 0;
+  bool get isOverLimit => minutesRemaining != null && minutesRemaining! <= 0;
 
   bool get isUrgent =>
-      minutesRemaining != null && minutesRemaining! <= 10 && minutesRemaining! > 0;
+      minutesRemaining != null &&
+      minutesRemaining! <= 10 &&
+      minutesRemaining! > 0;
 }

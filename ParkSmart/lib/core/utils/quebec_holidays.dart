@@ -22,24 +22,24 @@ class QuebecHolidays {
   /// Retourne [true] si [dt] (heure locale) tombe un jour férié provincial QC.
   static bool isHoliday(DateTime dt) {
     final holidays = _forYear(dt.year);
-    return holidays.any((h) =>
-        h.year == dt.year && h.month == dt.month && h.day == dt.day);
+    return holidays.any(
+        (h) => h.year == dt.year && h.month == dt.month && h.day == dt.day);
   }
 
   /// Liste des 10 jours fériés pour une année donnée.
   static List<DateTime> _forYear(int year) {
     final easter = _easter(year);
     return [
-      DateTime(year, 1, 1),                           // Jour de l'An
-      easter.subtract(const Duration(days: 2)),        // Vendredi saint
-      easter.add(const Duration(days: 1)),             // Lundi de Pâques
-      _patriotsDay(year),                              // Journée des Patriotes
-      DateTime(year, 6, 24),                           // Fête nationale QC
-      DateTime(year, 7, 1),                            // Fête du Canada
-      _labourDay(year),                                // Fête du Travail
-      _thanksgiving(year),                             // Action de grâces
-      DateTime(year, 12, 25),                          // Noël
-      DateTime(year, 12, 26),                          // Lendemain de Noël
+      DateTime(year, 1, 1), // Jour de l'An
+      easter.subtract(const Duration(days: 2)), // Vendredi saint
+      easter.add(const Duration(days: 1)), // Lundi de Pâques
+      _patriotsDay(year), // Journée des Patriotes
+      DateTime(year, 6, 24), // Fête nationale QC
+      DateTime(year, 7, 1), // Fête du Canada
+      _labourDay(year), // Fête du Travail
+      _thanksgiving(year), // Action de grâces
+      DateTime(year, 12, 25), // Noël
+      DateTime(year, 12, 26), // Lendemain de Noël
     ];
   }
 
@@ -59,7 +59,7 @@ class QuebecHolidays {
     final l = (32 + 2 * e + 2 * i - h - k) % 7;
     final m = (a + 11 * h + 22 * l) ~/ 451;
     final month = (h + l - 7 * m + 114) ~/ 31;
-    final day   = (h + l - 7 * m + 114) % 31 + 1;
+    final day = (h + l - 7 * m + 114) % 31 + 1;
     return DateTime(year, month, day);
   }
 

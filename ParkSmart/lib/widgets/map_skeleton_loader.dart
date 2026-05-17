@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:calcwise_core/calcwise_core.dart';
 
 /// Skeleton loader displayed while map geometry is loading.
 /// Shows shimmer animation to indicate data is loading.
@@ -73,17 +74,17 @@ class _MapSkeletonLoaderState extends State<MapSkeletonLoader>
               },
             ),
           // Loading text
-          Center(
+          const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(color: const Color(0xFF475569)),
-                const SizedBox(height: 16),
+                CircularProgressIndicator(color: Color(0xFF475569)),
+                SizedBox(height: 16),
                 Text(
                   'Chargement des données de rue...',
                   style: TextStyle(
                     color: Color(0xFF334155),
-                    fontSize: 14,
+                    fontSize: AppTextSize.body,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

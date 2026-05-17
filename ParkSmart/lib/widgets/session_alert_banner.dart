@@ -1,3 +1,4 @@
+import 'package:calcwise_core/calcwise_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/models/parking_session.dart';
@@ -47,11 +48,12 @@ class SessionAlertBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      duration: AppDuration.page,
+      margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: _bgColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: _bgColor.withAlpha(102),
@@ -63,15 +65,16 @@ class SessionAlertBanner extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           onTap: onEnd,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.mdPlus, vertical: AppSpacing.smPlus),
             child: Row(
               children: [
                 // Animated car icon
                 _PulsingIcon(isUrgent: session.isUrgent || session.isOverLimit),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.smPlus),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,14 +85,14 @@ class SessionAlertBanner extends StatelessWidget {
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          fontSize: AppTextSize.md,
                         ),
                       ),
                       Text(
                         _message,
                         style: TextStyle(
                           color: Colors.white.withAlpha(230),
-                          fontSize: 12,
+                          fontSize: AppTextSize.sm,
                         ),
                       ),
                     ],
@@ -105,7 +108,7 @@ class SessionAlertBanner extends StatelessWidget {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                        fontSize: AppTextSize.bodyLg,
                       ),
                     ),
                     Text(
@@ -117,13 +120,13 @@ class SessionAlertBanner extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 GestureDetector(
                   onTap: onDismiss,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(AppSpacing.xs),
                     child: const Icon(
-                      Icons.close,
+                      Icons.close_rounded,
                       color: Colors.white70,
                       size: 18,
                     ),
@@ -196,7 +199,9 @@ class _PulsingIconState extends State<_PulsingIcon>
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.of(context).disableAnimations;
     return ScaleTransition(
-      scale: (widget.isUrgent && !disableAnimations) ? _animation : const AlwaysStoppedAnimation(1.0),
+      scale: (widget.isUrgent && !disableAnimations)
+          ? _animation
+          : const AlwaysStoppedAnimation(1.0),
       child: const Icon(
         Icons.directions_car,
         color: Colors.white,

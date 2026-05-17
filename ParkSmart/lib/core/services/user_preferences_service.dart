@@ -52,20 +52,17 @@ class UserPreferencesService {
     await _prefs.setBool(_keyFilterMeter, filters[ParkingColor.meter] ?? true);
     await _prefs.setBool(
         _keyFilterRestricted, filters[ParkingColor.restricted] ?? true);
-    await _prefs.setBool(_keyFilterNoData, filters[ParkingColor.noData] ?? true);
+    await _prefs.setBool(
+        _keyFilterNoData, filters[ParkingColor.noData] ?? true);
   }
 
   Future<Map<ParkingColor, bool>> getFilters() async {
     await _ensureInit();
     return {
-      ParkingColor.free:
-          _prefs.getBool(_keyFilterFree) ?? true,
-      ParkingColor.meter:
-          _prefs.getBool(_keyFilterMeter) ?? true,
-      ParkingColor.restricted:
-          _prefs.getBool(_keyFilterRestricted) ?? true,
-      ParkingColor.noData:
-          _prefs.getBool(_keyFilterNoData) ?? true,
+      ParkingColor.free: _prefs.getBool(_keyFilterFree) ?? true,
+      ParkingColor.meter: _prefs.getBool(_keyFilterMeter) ?? true,
+      ParkingColor.restricted: _prefs.getBool(_keyFilterRestricted) ?? true,
+      ParkingColor.noData: _prefs.getBool(_keyFilterNoData) ?? true,
     };
   }
 

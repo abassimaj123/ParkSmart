@@ -29,18 +29,29 @@ class ThemeModeService {
   final ValueNotifier<ThemeMode> notifier =
       ValueNotifier<ThemeMode>(ThemeMode.system);
 
-  static const _key = 'theme_mode';
+  static const _key      = 'theme_mode';
+  static const _migrKey  = 'theme_mode_auto_default_v1';
 
-  /// Load saved preference. Falls back to [ThemeMode.dark] on first install
-  /// so the app matches the dark brand splash screens.
+  /// Load saved preference. Falls back to [ThemeMode.system] on first install
+  /// so the app automatically follows the device dark/light setting.
+  ///
+  /// One-time migration: resets any previously-saved 'dark' to 'system'
+  /// so all apps default to Auto on the next launch after this update.
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // One-time migration: clear old 'dark' default saved by previous builds.
+    if (!(prefs.getBool(_migrKey) ?? false)) {
+      await prefs.setString(_key, 'system');
+      await prefs.setBool(_migrKey, true);
+    }
+
     final saved = prefs.getString(_key);
     notifier.value = switch (saved) {
       'dark'   => ThemeMode.dark,
       'light'  => ThemeMode.light,
       'system' => ThemeMode.system,
-      _        => ThemeMode.dark,   // first install → dark
+      _        => ThemeMode.system, // first install → follow device setting
     };
   }
 

@@ -7,12 +7,16 @@ environment:
   sdk: '>=3.4.0 <4.0.0'
 
 dependencies:
+  calcwise_core:
+    git:
+      url: https://github.com/abassimaj123/calcwise_core.git
+      ref: main
   flutter:
     sdk: flutter
-  calcwise_core: ^1.0.0
 
   provider: ^6.1.2
   shared_preferences: ^2.3.5
+  flutter_local_notifications: ^18.0.1
   google_mobile_ads: ^5.1.0
   pdf: ^3.11.1
   printing: ^5.13.2

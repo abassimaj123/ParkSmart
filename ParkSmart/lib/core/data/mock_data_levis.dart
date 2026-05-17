@@ -25,12 +25,12 @@ import '../models/street_segment.dart';
 
 final List<StreetSegment> levisSegments = [
   // ── lv-001 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-001',
     streetName: 'Rue Wolfe',
     city: 'Lévis',
     side: 'Ouest',
-    osmWayIds: [243597658],          // Way 243597658 — diagonal NW, 11 nodes
+    osmWayIds: [243597658], // Way 243597658 — diagonal NW, 11 nodes
     coordinates: [
       [-71.1840328, 46.8092454],
       [-71.1842721, 46.8087534],
@@ -60,12 +60,12 @@ final List<StreetSegment> levisSegments = [
   ),
 
   // ── lv-002 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-002',
     streetName: 'Côte du Passage',
     city: 'Lévis',
     side: 'Est',
-    osmWayIds: [327158675],          // Way 327158675 — monte vers le ferry, 12 nodes
+    osmWayIds: [327158675], // Way 327158675 — monte vers le ferry, 12 nodes
     coordinates: [
       [-71.1836874, 46.8064206],
       [-71.1839981, 46.8065802],
@@ -95,12 +95,12 @@ final List<StreetSegment> levisSegments = [
   ),
 
   // ── lv-003 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-003',
     streetName: 'Avenue Bégin',
     city: 'Lévis',
     side: 'Les deux côtés',
-    osmWayIds: [32402442],           // Way 32402442 — diagonale NW, 8 nodes
+    osmWayIds: [32402442], // Way 32402442 — diagonale NW, 8 nodes
     coordinates: [
       [-71.1836874, 46.8064206],
       [-71.1836026, 46.8064869],
@@ -133,12 +133,12 @@ final List<StreetSegment> levisSegments = [
   ),
 
   // ── lv-004 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-004',
     streetName: 'Boulevard Alphonse-Desjardins',
     city: 'Lévis',
     side: 'Les deux côtés',
-    osmWayIds: [463113102],          // Way 463113102 — diagonale NE, 9 nodes
+    osmWayIds: [463113102], // Way 463113102 — diagonale NE, 9 nodes
     coordinates: [
       [-71.1767737, 46.8027486],
       [-71.1768623, 46.8027965],
@@ -173,7 +173,7 @@ final List<StreetSegment> levisSegments = [
 
   // ── lv-005 ──────────────────────────────────────────────────────────────
   // 3 ways consécutifs = un segment logique — l'algo les concatène
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-005',
     streetName: 'Route du Président-Kennedy',
     city: 'Lévis',
@@ -211,12 +211,12 @@ final List<StreetSegment> levisSegments = [
   ),
 
   // ── lv-006 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-006',
     streetName: 'Rue Dorimène-Desjardins',
     city: 'Lévis',
     side: 'Est',
-    osmWayIds: [243601177],          // Way 243601177 — longue diagonale, 18 nodes
+    osmWayIds: [243601177], // Way 243601177 — longue diagonale, 18 nodes
     coordinates: [
       [-71.1858703, 46.8070494],
       [-71.1856564, 46.8069139],
@@ -259,12 +259,14 @@ final List<StreetSegment> levisSegments = [
   ),
 
   // ── lv-007 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-007',
     streetName: 'Rue Fraser',
     city: 'Lévis',
     side: 'Les deux côtés',
-    osmWayIds: [40301133],           // Way 40301133 — sinueuse 23 nodes, lat ~46.810-46.817
+    osmWayIds: [
+      40301133
+    ], // Way 40301133 — sinueuse 23 nodes, lat ~46.810-46.817
     coordinates: [
       [-71.1840740, 46.8108276],
       [-71.1847444, 46.8110033],
@@ -297,12 +299,12 @@ final List<StreetSegment> levisSegments = [
   ),
 
   // ── lv-008 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-008',
     streetName: 'Chemin du Gouvernement',
     city: 'Lévis',
     side: 'Les deux côtés',
-    osmWayIds: [156791444],          // Way 156791444 — diagonale NE vieux-Lévis, 6 nodes
+    osmWayIds: [156791444], // Way 156791444 — diagonale NE vieux-Lévis, 6 nodes
     coordinates: [
       [-71.1696184, 46.8007628],
       [-71.1676225, 46.8025187],
@@ -319,7 +321,7 @@ final List<StreetSegment> levisSegments = [
 
   // ── lv-009 ──────────────────────────────────────────────────────────────
   // 4 ways consécutifs formant la section est de la Kennedy
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-009',
     streetName: 'Route du Président-Kennedy',
     city: 'Lévis',
@@ -355,12 +357,12 @@ final List<StreetSegment> levisSegments = [
   ),
 
   // ── lv-010 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-010',
     streetName: 'Rue Notre-Dame',
     city: 'Lévis',
     side: 'Les deux côtés',
-    osmWayIds: [40300784],           // Way 40300784 — diagonale NE, 9 nodes
+    osmWayIds: [40300784], // Way 40300784 — diagonale NE, 9 nodes
     coordinates: [
       [-71.1829598, 46.8098031],
       [-71.1824409, 46.8100892],
@@ -381,12 +383,12 @@ final List<StreetSegment> levisSegments = [
   // ── lv-011 ──────────────────────────────────────────────────────────────
   // osmWayIds: [] → fallback sur coordinates embarquées (ID non disponible)
   // Pour obtenir l'ID : https://overpass-turbo.eu → zoom sur Rue Laurier Lévis → clic rue → copier ID
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-011',
     streetName: 'Rue Laurier',
     city: 'Lévis',
     side: 'Les deux côtés',
-    osmWayIds: [],                   // Dépend de Overpass — coordinates embarquées suffisent
+    osmWayIds: [], // Dépend de Overpass — coordinates embarquées suffisent
     coordinates: [
       [-71.1875884, 46.8104000],
       [-71.1874577, 46.8104200],
@@ -412,12 +414,12 @@ final List<StreetSegment> levisSegments = [
   ),
 
   // ── lv-012 ──────────────────────────────────────────────────────────────
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-012',
     streetName: 'Boulevard Guillaume-Couture',
     city: 'Lévis',
     side: 'Les deux côtés',
-    osmWayIds: [471832874],          // Way 471832874 — grande diagonale NE, 10 nodes
+    osmWayIds: [471832874], // Way 471832874 — grande diagonale NE, 10 nodes
     coordinates: [
       [-71.1658586, 46.8043505],
       [-71.1663263, 46.8038610],
@@ -453,7 +455,7 @@ final List<StreetSegment> levisSegments = [
 
   // ── lv-013 ──────────────────────────────────────────────────────────────
   // 4 ways consécutifs = segment complet de la rue
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-013',
     streetName: 'Rue Valère-Plante',
     city: 'Lévis',
@@ -483,7 +485,7 @@ final List<StreetSegment> levisSegments = [
 
   // ── lv-014 ──────────────────────────────────────────────────────────────
   // 3 ways consécutifs = Rue Labadie complète
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-014',
     streetName: 'Rue Labadie',
     city: 'Lévis',
@@ -516,7 +518,7 @@ final List<StreetSegment> levisSegments = [
 
   // ── lv-015 ──────────────────────────────────────────────────────────────
   // 3 ways consécutifs = Rue Wolfe section nord complète (20 nodes)
-  StreetSegment(
+  const StreetSegment(
     id: 'lv-015',
     streetName: 'Rue Wolfe',
     city: 'Lévis',

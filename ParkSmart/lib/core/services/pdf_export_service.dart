@@ -3,10 +3,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../models/parking_session.dart';
+import 'package:calcwise_core/calcwise_core.dart';
 
 // ParkSmart brand color
-const _navy  = PdfColor(0.102, 0.137, 0.494); // #1A237E
-const _green = PdfColor(0.0,   0.784, 0.325); // #00C853
+const _navy = PdfColor(0.102, 0.137, 0.494); // #1A237E
 
 class PdfExportService {
   static final _dtFmt = DateFormat('MMM d, yyyy  HH:mm');
@@ -23,18 +23,17 @@ class PdfExportService {
 
     await Printing.sharePdf(
       bytes: await pdf.save(),
-      filename:
-          'ParkSmart_${session.startTime.millisecondsSinceEpoch}.pdf',
+      filename: 'ParkSmart_${session.startTime.millisecondsSinceEpoch}.pdf',
     );
   }
 
   static pw.Widget _buildPage(ParkingSession session) {
-    final start    = session.startTime;
-    final end      = DateTime.now();
+    final start = session.startTime;
+    final end = DateTime.now();
     final duration = end.difference(start);
-    final minutes  = duration.inMinutes;
-    final street   = session.segment.streetName;
-    final maxMins  = session.maxMinutes;
+    final minutes = duration.inMinutes;
+    final street = session.segment.streetName;
+    final maxMins = session.maxMinutes;
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -44,19 +43,21 @@ class PdfExportService {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
-            pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-              pw.Text('ParkSmart',
-                  style: pw.TextStyle(
-                      fontSize: 22,
-                      fontWeight: pw.FontWeight.bold,
-                      color: _navy)),
-              pw.Text('Parking Session Report',
-                  style: const pw.TextStyle(
-                      fontSize: 11, color: PdfColors.grey700)),
-            ]),
+            pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('ParkSmart',
+                      style: pw.TextStyle(
+                          fontSize: AppTextSize.titleMd,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _navy)),
+                  pw.Text('Parking Session Report',
+                      style: const pw.TextStyle(
+                          fontSize: AppTextSize.xs, color: PdfColors.grey700)),
+                ]),
             pw.Text(_dtFmt.format(DateTime.now()),
-                style: const pw.TextStyle(
-                    fontSize: 9, color: PdfColors.grey500)),
+                style:
+                    const pw.TextStyle(fontSize: 9, color: PdfColors.grey500)),
           ],
         ),
         pw.Container(
@@ -66,13 +67,15 @@ class PdfExportService {
 
         // Session details
         _sectionBox('SESSION DETAILS', [
-          _row('Street',         street),
-          _row('Started',        _dtFmt.format(start)),
-          _row('Ended',          _dtFmt.format(end)),
-          _row('Duration',       '$minutes min (${(minutes / 60).toStringAsFixed(1)} h)'),
+          _row('Street', street),
+          _row('Started', _dtFmt.format(start)),
+          _row('Ended', _dtFmt.format(end)),
+          _row('Duration',
+              '$minutes min (${(minutes / 60).toStringAsFixed(1)} h)'),
           if (maxMins != null)
-            _row('Max Allowed',  '$maxMins min', highlight: minutes > maxMins),
-          _row('Status',
+            _row('Max Allowed', '$maxMins min', highlight: minutes > maxMins),
+          _row(
+              'Status',
               maxMins == null
                   ? 'OK'
                   : (minutes > maxMins ? 'EXCEEDED LIMIT' : 'Within limit'),
@@ -82,8 +85,8 @@ class PdfExportService {
 
         // Map context
         _sectionBox('ZONE INFO', [
-          _row('City',    session.segment.city),
-          _row('Side',    session.segment.side),
+          _row('City', session.segment.city),
+          _row('Side', session.segment.side),
           _row('Zone ID', session.segment.id),
         ]),
 
@@ -106,23 +109,22 @@ class PdfExportService {
                   color: PdfColors.white)),
         ),
         pw.Container(
-          padding: const pw.EdgeInsets.all(8),
+          padding: const pw.EdgeInsets.all(AppSpacing.sm),
           decoration: pw.BoxDecoration(
               border: pw.Border.all(color: PdfColors.grey300, width: 0.5)),
           child: pw.Column(children: rows),
         ),
       ]);
 
-  static pw.Widget _row(String label, String value,
-      {bool highlight = false}) =>
+  static pw.Widget _row(String label, String value, {bool highlight = false}) =>
       pw.Padding(
         padding: const pw.EdgeInsets.symmetric(vertical: 2.5),
         child: pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Text(label,
-                style: const pw.TextStyle(
-                    fontSize: 9, color: PdfColors.grey700)),
+                style:
+                    const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
             pw.Text(value,
                 style: pw.TextStyle(
                     fontSize: 9,

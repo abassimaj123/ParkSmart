@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
+import 'package:calcwise_core/calcwise_core.dart';
 
 class TimeControlWidget extends StatelessWidget {
   final DateTime? selectedTime; // null = "Maintenant"
@@ -16,9 +17,9 @@ class TimeControlWidget extends StatelessWidget {
   static const _jours = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
   String _jourLabel(DateTime dt) {
-    final now   = DateTime.now();
+    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final diff  = DateTime(dt.year, dt.month, dt.day).difference(today).inDays;
+    final diff = DateTime(dt.year, dt.month, dt.day).difference(today).inDays;
     if (diff == 0) return '';
     if (diff == 1) return 'Demain ';
     return '${_jours[dt.weekday - 1]} ';
@@ -60,14 +61,15 @@ class TimeControlWidget extends StatelessWidget {
       onTap: () => _showTimePicker(context),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl, vertical: AppSpacing.smPlus),
         decoration: BoxDecoration(
           color: _isNow ? AppTheme.primary : AppTheme.accent,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
           boxShadow: [
             BoxShadow(
-              color: (_isNow ? AppTheme.primary : AppTheme.accent)
-                  .withAlpha(89),
+              color:
+                  (_isNow ? AppTheme.primary : AppTheme.accent).withAlpha(89),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -87,7 +89,7 @@ class TimeControlWidget extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
-                fontSize: 14,
+                fontSize: AppTextSize.body,
                 letterSpacing: 0.2,
               ),
             ),
@@ -127,7 +129,11 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
     final rawMinute = (t.minute / 5).round() * 5;
     final extraHour = rawMinute ~/ 60;
     _selectedTime = DateTime(
-      t.year, t.month, t.day, t.hour + extraHour, rawMinute % 60,
+      t.year,
+      t.month,
+      t.day,
+      t.hour + extraHour,
+      rawMinute % 60,
     );
   }
 
@@ -140,10 +146,10 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
   /// Formate l'heure avec le nom du jour si différent d'aujourd'hui.
   /// Exemples : "14:30"  /  "Demain 02:00"  /  "Lun 03:15"
   String _formatWithDay(DateTime dt) {
-    final now   = DateTime.now();
+    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final diff  = DateTime(dt.year, dt.month, dt.day).difference(today).inDays;
-    final hhmm  = DateFormat('HH:mm').format(dt);
+    final diff = DateTime(dt.year, dt.month, dt.day).difference(today).inDays;
+    final hhmm = DateFormat('HH:mm').format(dt);
     if (diff == 0) return hhmm;
     if (diff == 1) return 'Demain $hhmm';
     return '${_jours[dt.weekday - 1]} $hhmm';
@@ -152,26 +158,26 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Container(
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFFCBD5E1),
+              color: Theme.of(context).colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Row(
               children: [
                 Text(
@@ -194,24 +200,24 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
           ),
           // Quick offset buttons
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Row(
               children: [
                 _QuickButton(
                   label: '+30 min',
                   onTap: () => _addDuration(const Duration(minutes: 30)),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 _QuickButton(
                   label: '+1h',
                   onTap: () => _addDuration(const Duration(hours: 1)),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 _QuickButton(
                   label: '+2h',
                   onTap: () => _addDuration(const Duration(hours: 2)),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 _QuickButton(
                   label: '+3h',
                   onTap: () => _addDuration(const Duration(hours: 3)),
@@ -219,7 +225,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           // Time picker
           SizedBox(
             height: 180,
@@ -246,9 +252,9 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
               },
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -256,21 +262,23 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: AppSpacing.mdPlus),
                 ),
                 child: Text(
                   'Voir à ${_formatWithDay(_selectedTime)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: AppTextSize.bodyLg,
                   ),
                 ),
               ),
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
+          SizedBox(
+              height: MediaQuery.of(context).padding.bottom + AppSpacing.md),
         ],
       ),
     );
@@ -289,10 +297,10 @@ class _QuickButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           decoration: BoxDecoration(
             color: AppTheme.primary.withAlpha(20),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.mdPlus),
             border: Border.all(
               color: AppTheme.primary.withAlpha(38),
             ),
@@ -301,7 +309,7 @@ class _QuickButton extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: AppTextSize.sm,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.primary,
               ),

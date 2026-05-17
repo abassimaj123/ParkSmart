@@ -1,20 +1,20 @@
 /// Represents a single job offer's input parameters.
 class JobOffer {
-  final String label;               // Display name e.g. "Offer A"
-  final String company;             // Company name (optional)
-  final double baseSalary;          // Annual gross salary USD
-  final String stateCode;           // 2-letter US state e.g. 'CA'
-  final String city;                // City name for CoL adjustment (premium)
-  final double bonusPct;            // Annual bonus as % of base (e.g. 10 = 10%)
-  final double k401kMatchPct;       // Employer 401k match % (e.g. 4 = 4%)
-  final double k401kUpToPct;        // Match applies up to X% of salary
+  final String label; // Display name e.g. "Offer A"
+  final String company; // Company name (optional)
+  final double baseSalary; // Annual gross salary USD
+  final String stateCode; // 2-letter US state e.g. 'CA'
+  final String city; // City name for CoL adjustment (premium)
+  final double bonusPct; // Annual bonus as % of base (e.g. 10 = 10%)
+  final double k401kMatchPct; // Employer 401k match % (e.g. 4 = 4%)
+  final double k401kUpToPct; // Match applies up to X% of salary
   final double healthInsuranceSavings; // Annual $ vs buying on marketplace
   final double dentalVisionSavings; // Annual $ dental+vision savings
-  final int ptoDays;                // Paid time off days per year
-  final double annualRsuValue;      // Annual RSU/stock grant value USD
-  final double commuteMilesPerDay;  // One-way miles (0 if remote)
-  final double annualRaisePct;      // Expected annual raise % for projection
-  final bool isRemote;              // Eliminates commute cost
+  final int ptoDays; // Paid time off days per year
+  final double annualRsuValue; // Annual RSU/stock grant value USD
+  final double commuteMilesPerDay; // One-way miles (0 if remote)
+  final double annualRaisePct; // Expected annual raise % for projection
+  final bool isRemote; // Eliminates commute cost
 
   const JobOffer({
     this.label = 'Offer',

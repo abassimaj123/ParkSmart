@@ -35,23 +35,23 @@ class OverpassService {
     'https://overpass.openstreetmap.fr/api/interpreter',
   ];
 
-  static const _cacheKey  = 'osm_ways_v1';        // indexé par way ID
+  static const _cacheKey = 'osm_ways_v1'; // indexé par way ID
   static const _cacheTsKey = 'osm_ways_ts_v1';
-  static const _cacheTtl  = Duration(days: 7);    // géométrie stable, TTL long
+  static const _cacheTtl = Duration(days: 7); // géométrie stable, TTL long
 
   /// Headers communs — User-Agent requis par certains serveurs Overpass.
   static const _headers = {
     'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent'  : 'ParkSmart/1.0 (Flutter mobile; OSM data; contact:parksmart@app.local)',
-    'Accept'      : 'application/json',
+    'User-Agent':
+        'ParkSmart/1.0 (Flutter mobile; OSM data; contact:parksmart@app.local)',
+    'Accept': 'application/json',
   };
 
   // ── API publique ───────────────────────────────────────────────────────────
 
   /// Retourne la géométrie pour un ensemble d'IDs OSM.
   /// Charge depuis le cache d'abord — réseau seulement pour les IDs manquants.
-  static Future<Map<int, List<List<double>>>> fetchByIds(
-      Set<int> ids) async {
+  static Future<Map<int, List<List<double>>>> fetchByIds(Set<int> ids) async {
     if (ids.isEmpty) return {};
 
     final cached = await _loadCache();
@@ -77,16 +77,14 @@ class OverpassService {
     final fetched = await _fetchIds(miss);
     await _mergeAndSaveCache(fetched);
 
-    debugPrint(
-        'Overpass: ${hit.length} cache + ${fetched.length} réseau '
+    debugPrint('Overpass: ${hit.length} cache + ${fetched.length} réseau '
         '(${miss.length - fetched.length} introuvables)');
     return {...hit, ...fetched};
   }
 
   // ── Réseau ────────────────────────────────────────────────────────────────
 
-  static Future<Map<int, List<List<double>>>> _fetchIds(
-      Set<int> ids) async {
+  static Future<Map<int, List<List<double>>>> _fetchIds(Set<int> ids) async {
     final idStr = ids.join(',');
     final query = '[out:json][timeout:30]; way(id:$idStr); out geom;';
 
@@ -94,13 +92,13 @@ class OverpassService {
     if (body == null) return {};
 
     try {
-      final data     = jsonDecode(body) as Map<String, dynamic>;
+      final data = jsonDecode(body) as Map<String, dynamic>;
       final elements = data['elements'] as List<dynamic>;
-      final result   = <int, List<List<double>>>{};
+      final result = <int, List<List<double>>>{};
 
       for (final el in elements) {
         final wayId = el['id'] as int;
-        final geom  = el['geometry'] as List<dynamic>?;
+        final geom = el['geometry'] as List<dynamic>?;
         if (geom == null || geom.length < 2) continue;
 
         result[wayId] = geom
@@ -179,9 +177,9 @@ class OverpassService {
       Map<int, List<List<double>>> newData) async {
     if (newData.isEmpty) return;
     try {
-      final prefs    = await SharedPreferences.getInstance();
+      final prefs = await SharedPreferences.getInstance();
       final existing = await _loadCache();
-      final merged   = {...existing, ...newData};
+      final merged = {...existing, ...newData};
 
       // Clés stringifiées pour JSON
       final encoded = merged.map((k, v) => MapEntry(k.toString(), v));
@@ -198,8 +196,8 @@ class OverpassService {
   /// Cache namespace pour les rues en masse (séparé du cache de segments).
   /// v5 : city IDs remappés (quebec+levis → capitale, laval+longueuil → montreal).
   static const _bulkCachePrefix = 'osm_bulk_ways_v5_';
-  static const _bulkTsPrefix    = 'osm_bulk_ts_v5_';
-  static const _bulkCacheTtl    = Duration(days: 30); // géométrie stable
+  static const _bulkTsPrefix = 'osm_bulk_ts_v5_';
+  static const _bulkCacheTtl = Duration(days: 30); // géométrie stable
 
   /// Construit la requête Overpass pour une ville ou région.
   ///
@@ -209,7 +207,8 @@ class OverpassService {
   ///
   /// La bbox est toujours incluse comme pré-filtre géographique côté serveur.
   static String _buildBulkQuery(City city) {
-    const hw  = r'"highway"~"^(residential|tertiary|unclassified|living_street)$"';
+    const hw =
+        r'"highway"~"^(residential|tertiary|unclassified|living_street)$"';
     const acc = r'["name"]["access"!="private"]["access"!="no"]';
     final box = city.overpassBbox;
 
@@ -238,7 +237,7 @@ class OverpassService {
     for (int i = 0; i < areas.length; i++) {
       final alias = String.fromCharCode('a'.codeUnitAt(0) + i);
       buf.write('area["name"="${areas[i]}"]["boundary"="administrative"'
-          ']["admin_level"="8"]->.${alias};\n');
+          ']["admin_level"="8"]->.$alias;\n');
     }
     buf.write('(\n');
     for (int i = 0; i < areas.length; i++) {
@@ -287,12 +286,12 @@ class OverpassService {
     }
 
     try {
-      final data     = jsonDecode(body) as Map<String, dynamic>;
+      final data = jsonDecode(body) as Map<String, dynamic>;
       final elements = data['elements'] as List<dynamic>;
-      final result   = <BulkStreet>[];
+      final result = <BulkStreet>[];
 
       for (final el in elements) {
-        final id   = el['id'] as int;
+        final id = el['id'] as int;
         final tags = el['tags'] as Map<String, dynamic>?;
         if (tags == null) continue;
 
@@ -306,7 +305,7 @@ class OverpassService {
         result.add(BulkStreet(
           osmWayId: id,
           name: name,
-          city: city.id,   // identifiant stable ('quebec', 'levis', 'montreal')
+          city: city.id, // identifiant stable ('quebec', 'levis', 'montreal')
           // Arrondi à 5 décimales ≈ 1 m — réduit la taille JSON ~30 %
           coordinates: geom.map<List<double>>((n) {
             final lon = (n['lon'] as num).toDouble();
@@ -389,8 +388,9 @@ class OverpassService {
     } else {
       // Effacer toutes les clés v3 bulk connues
       final keys = prefs.getKeys().where(
-        (k) => k.startsWith(_bulkCachePrefix) || k.startsWith(_bulkTsPrefix),
-      );
+            (k) =>
+                k.startsWith(_bulkCachePrefix) || k.startsWith(_bulkTsPrefix),
+          );
       for (final k in keys) {
         await prefs.remove(k);
       }

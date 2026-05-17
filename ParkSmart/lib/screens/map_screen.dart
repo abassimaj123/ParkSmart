@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:calcwise_core/calcwise_core.dart';
@@ -6,6 +7,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import '../core/data/mock_data_quebec.dart';
 import '../core/data/mock_data_levis.dart';
 import '../core/data/mock_data_montreal.dart';
@@ -15,19 +18,22 @@ import '../core/models/city.dart';
 import '../core/models/street_segment.dart';
 import '../core/models/bulk_street.dart';
 import '../core/models/parking_rule.dart';
-import '../core/services/amd_service.dart';
-import '../core/services/alternating_service.dart';
-import '../core/services/nettoyage_service.dart';
+import '../core/services/city_parking_service.dart';
+import '../core/services/osm_parking_service.dart';
 import '../core/services/overpass_service.dart';
 import '../core/services/rule_engine.dart';
 import '../core/services/session_service.dart';
 import '../core/services/user_preferences_service.dart';
+import '../core/services/saved_spot_service.dart';
 import '../core/theme/app_theme.dart';
+import '../core/services/freemium_service.dart';
 import '../widgets/time_control_widget.dart';
 import '../widgets/layer_filter_widget.dart';
 import '../widgets/map_skeleton_loader.dart';
 import '../widgets/segment_bottom_sheet.dart';
+import '../widgets/banner_ad_widget.dart';
 import '../widgets/session_alert_banner.dart';
+import '../widgets/search_bar_widget.dart';
 import 'settings_screen.dart';
 
 class MapScreen extends StatefulWidget {
@@ -47,10 +53,10 @@ class _MapScreenState extends State<MapScreen>
   bool _bannerDismissed = false;
 
   Map<ParkingColor, bool> _filters = {
-    ParkingColor.free:        true,
-    ParkingColor.meter:       true,
-    ParkingColor.restricted:  true,
-    ParkingColor.noData:      true,
+    ParkingColor.free: true,
+    ParkingColor.meter: true,
+    ParkingColor.restricted: true,
+    ParkingColor.noData: true,
   };
 
   Timer? _refreshTimer;
@@ -76,6 +82,15 @@ class _MapScreenState extends State<MapScreen>
   // Flag : auto-sélection de ville au premier fix GPS (une seule fois)
   bool _gpsAutoSelected = false;
 
+  // ── Search ───────────────────────────────────────────────────────────────
+  bool _searchOpen = false;
+  bool _searchLoading = false;
+
+  // ── Saved spots ──────────────────────────────────────────────────────────
+  List<SavedSpot> _savedSpots = [];
+  // Toggle saved spots layer visibility
+  bool _showSavedSpots = true;
+
   // Zoom courant — initialisé à la valeur par défaut, mis à jour par _onMapEvent.
   // NE PAS utiliser _mapController.camera.zoom dans build() :
   // le contrôleur n'est pas encore attaché au premier frame → StateError.
@@ -83,18 +98,20 @@ class _MapScreenState extends State<MapScreen>
 
   // Seuils d'apparition des polylines.
   // En dessous : rues invisibles à cette échelle → calcul inutile.
-  static const _kZoomBulk = 12.0;  // bulk  : visible dès le zoom par défaut ville
-  static const _kZoomMock = 11.0;  // mock  : apparaissent un cran avant (peu nombreux)
+  static const _kZoomBulk =
+      12.0; // bulk  : visible dès le zoom par défaut ville
+  static const _kZoomMock =
+      11.0; // mock  : apparaissent un cran avant (peu nombreux)
 
   // Pulsing animation for GPS dot
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
 
   List<StreetSegment> get _allSegments => [
-    ...quebecSegments,
-    ...levisSegments,
-    ...montrealSegments,
-  ];
+        ...quebecSegments,
+        ...levisSegments,
+        ...montrealSegments,
+      ];
   DateTime get _effectiveTime => _viewTime ?? DateTime.now();
 
   @override
@@ -117,12 +134,10 @@ class _MapScreenState extends State<MapScreen>
 
     _startPositionTracking();
     _loadWayGeometry();
-    _loadBulkStreets();
-    AmdService().load();         // chargement en parallèle, sans attendre
-    AlternatingService().load(); // 529 rues alternées Montréal
-    NettoyageService().load();   // calendrier nettoyage des rues
+    _loadBulkStreets(); // charge aussi AmdService / AlternatingService / NettoyageService
 
-    _restoreUserPreferences();    // Restaurer préférences utilisateur (ville, filtres, etc.)
+    _restoreUserPreferences(); // Restaurer préférences utilisateur (ville, filtres, etc.)
+    _loadSavedSpots();
   }
 
   Future<void> _restoreUserPreferences() async {
@@ -141,6 +156,82 @@ class _MapScreenState extends State<MapScreen>
       }
     } catch (_) {
       // Erreur lecture prefs → utiliser défauts
+    }
+  }
+
+  // ── Saved spots ──────────────────────────────────────────────────────────
+
+  Future<void> _loadSavedSpots() async {
+    final spots = await SavedSpotService.instance.getAll();
+    if (mounted) setState(() => _savedSpots = spots);
+  }
+
+  Future<void> _saveCurrentSpot() async {
+    final pos = _currentPosition;
+    if (pos == null) {
+      _snack('Position GPS non disponible');
+      return;
+    }
+    final alreadySaved = await SavedSpotService.instance.hasSimilar(
+      pos.latitude,
+      pos.longitude,
+    );
+    if (alreadySaved) {
+      _snack('Un spot est déjà sauvegardé ici');
+      return;
+    }
+    final spot = SavedSpot(
+      latitude: pos.latitude,
+      longitude: pos.longitude,
+      label: 'Ma position',
+      savedAt: DateTime.now().toIso8601String(),
+    );
+    final error = await SavedSpotService.instance.save(spot);
+    if (error != null) {
+      _snack(error);
+    } else {
+      HapticFeedback.mediumImpact();
+      _snack('Spot sauvegardé !');
+      _loadSavedSpots();
+    }
+  }
+
+  // ── Address search (Nominatim) ────────────────────────────────────────────
+
+  Future<void> _searchAddress(String query) async {
+    if (query.trim().isEmpty) return;
+    setState(() => _searchLoading = true);
+
+    try {
+      final cityName = _selectedCity.name;
+      final encoded = Uri.encodeQueryComponent('$query, $cityName');
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=$encoded&format=json&limit=1',
+      );
+      final resp = await http.get(
+        url,
+        headers: const {'User-Agent': 'ParkSmart/1.0 (parksmart.app)'},
+      ).timeout(const Duration(seconds: 8));
+
+      if (resp.statusCode == 200) {
+        final results = json.decode(resp.body) as List;
+        if (results.isNotEmpty) {
+          final r = results.first as Map<String, dynamic>;
+          final lat = double.tryParse(r['lat']?.toString() ?? '');
+          final lon = double.tryParse(r['lon']?.toString() ?? '');
+          if (lat != null && lon != null) {
+            _mapController.move(LatLng(lat, lon), 16.0);
+            setState(() => _searchOpen = false);
+            HapticFeedback.lightImpact();
+            return;
+          }
+        }
+      }
+      _snack('Adresse non trouvée');
+    } catch (_) {
+      _snack('Erreur de recherche — vérifiez votre connexion');
+    } finally {
+      if (mounted) setState(() => _searchLoading = false);
     }
   }
 
@@ -229,15 +320,31 @@ class _MapScreenState extends State<MapScreen>
     if (_loadingBulkStreets) return;
     setState(() => _loadingBulkStreets = true);
 
-    final results = await Future.wait(
+    // Paralléliser : Overpass + assets locaux (AMD 2.9 MB, alternés 159 KB, nettoyage)
+    final streetsResults = await Future.wait(
       CityRegistry.supported.map((c) => OverpassService.fetchBulkStreets(c)),
+    );
+
+    // Attendre les services asset avant de calculer les règles :
+    // Sans ça, si Overpass est en cache (retour ~0 ms), _computeStreetRules()
+    // tourne avant que les données soient prêtes → rues sans couleur.
+    await Future.wait(
+      CityRegistry.supported.map((c) => CityParkingService(c.id).load()),
+    );
+
+    // Charger les tags parking:lane OSM (cache 14 jours) pour chaque ville.
+    // En cas d'erreur réseau, OsmParkingService reste non chargé — sans impact
+    // sur le reste de l'app (fallback ZoneRegistry toujours actif).
+    await Future.wait(
+      CityRegistry.supported
+          .map((c) => OsmParkingService(c.id).load(c.overpassBbox)),
     );
 
     if (mounted) {
       setState(() {
-        _bulkStreets = results.expand((r) => r).toList();
+        _bulkStreets = streetsResults.expand((r) => r).toList();
         _loadingBulkStreets = false;
-        _loadingGeometry = false;  // Finalize loading state
+        _loadingGeometry = false;
       });
       _computeStreetRules();
     }
@@ -255,44 +362,33 @@ class _MapScreenState extends State<MapScreen>
     await Future.delayed(Duration.zero);
 
     final newRules = <int, List<ParkingRule>>{};
-    final amd      = AmdService();
-    final alt      = AlternatingService();
-    final nett     = NettoyageService();
-    int amdHits    = 0;
-    int altHits    = 0;
-    int nettHits   = 0;
-    int zoneHits   = 0;
+    int dataHits = 0;
+    int osmHits = 0;
+    int zoneHits = 0;
 
     for (final street in _bulkStreets) {
       if (street.coordinates.isEmpty) continue;
       final mid = street.coordinates[street.coordinates.length ~/ 2];
 
-      // 1. Données AMD précises (Montréal — parcomètres GPS)
-      if (street.city == 'montreal' && amd.isLoaded) {
-        final amdRules = amd.rulesNear(mid[0], mid[1]);
-        if (amdRules != null) {
-          newRules[street.osmWayId] = amdRules;
-          amdHits++;
+      // 1. Données spécifiques à la ville (parcomètres, alternance, nettoyage)
+      //    CityParkingService(cityId) → null si pas de fichier assets/data/{cityId}.json
+      final svc = CityParkingService(street.city);
+      if (svc.isLoaded) {
+        final rules = svc.rulesNear(mid[0], mid[1]);
+        if (rules != null) {
+          newRules[street.osmWayId] = rules;
+          dataHits++;
           continue;
         }
       }
 
-      // 2. Stationnement alterné (Montréal — rues résidentielles pair/impair)
-      if (street.city == 'montreal' && alt.isLoaded) {
-        final altSeg = alt.segmentNear(mid[0], mid[1]);
-        if (altSeg != null) {
-          newRules[street.osmWayId] = altSeg.rules;
-          altHits++;
-          continue;
-        }
-      }
-
-      // 2b. Nettoyage des rues (Montréal — calendrier annuel)
-      if (street.city == 'montreal' && nett.isLoaded) {
-        final nettSeg = nett.segmentNear(mid[0], mid[1]);
-        if (nettSeg != null) {
-          newRules[street.osmWayId] = nettSeg.rules;
-          nettHits++;
+      // 2. Tags OSM parking:lane (lookup O(1) par way ID)
+      final osmSvc = OsmParkingService(street.city);
+      if (osmSvc.isLoaded) {
+        final osmRules = osmSvc.rulesForWayId(street.osmWayId);
+        if (osmRules != null && osmRules.isNotEmpty) {
+          newRules[street.osmWayId] = osmRules;
+          osmHits++;
           continue;
         }
       }
@@ -310,17 +406,15 @@ class _MapScreenState extends State<MapScreen>
     if (mounted) {
       setState(() => _streetRules = newRules);
       debugPrint('RuleLookup: ${newRules.length} rues assignées '
-          '($amdHits AMD · $altHits alternés · $nettHits nettoyage · '
-          '$zoneHits zones · '
+          '($dataHits data · $osmHits osm · $zoneHits zones · '
           '${_bulkStreets.length - newRules.length} défaut ville)');
     }
   }
 
   /// IDs OSM déjà couverts par les segments mock (vérifiés, règles précises).
   /// Calculé une fois — évite de dessiner deux lignes sur la même rue.
-  late final Set<int> _mockedWayIds = _allSegments
-      .expand((s) => s.osmWayIds)
-      .toSet();
+  late final Set<int> _mockedWayIds =
+      _allSegments.expand((s) => s.osmWayIds).toSet();
 
   /// Construit les polylines pour les rues en masse (couche de fond).
   ///
@@ -352,13 +446,13 @@ class _MapScreenState extends State<MapScreen>
       final bool hasSpecificData;
 
       if (zoneRules != null) {
-        rules           = zoneRules;           // zone connue → règles précises
+        rules = zoneRules; // zone connue → règles précises
         hasSpecificData = true;
       } else if (_selectedCity.hasComprehensiveDefaults) {
-        rules           = _selectedCity.defaultRules; // QC/LV : règles city-wide valides
+        rules = _selectedCity.defaultRules; // QC/LV : règles city-wide valides
         hasSpecificData = true;
       } else {
-        rules           = const [];            // MTL hors zone : inconnu
+        rules = const []; // MTL hors zone : inconnu
         hasSpecificData = false;
       }
 
@@ -373,17 +467,17 @@ class _MapScreenState extends State<MapScreen>
       } else {
         final result = RuleEngine.evaluateRules(rules, _effectiveTime);
         displayColor = result.color == ParkingColor.noData
-            ? ParkingColor.free   // on n'affiche jamais gris
+            ? ParkingColor.free // on n'affiche jamais gris
             : result.color;
       }
 
       if (!(_filters[displayColor] ?? true)) continue;
 
       final baseColor = switch (displayColor) {
-        ParkingColor.free       => AppTheme.free,
-        ParkingColor.meter      => AppTheme.meter,
+        ParkingColor.free => AppTheme.free,
+        ParkingColor.meter => AppTheme.meter,
         ParkingColor.restricted => AppTheme.restricted,
-        ParkingColor.noData     => AppTheme.noData,
+        ParkingColor.noData => AppTheme.noData,
       };
 
       final isSel = _selectedBulkStreet?.osmWayId == street.osmWayId;
@@ -515,10 +609,11 @@ class _MapScreenState extends State<MapScreen>
   }
 
   void _onMapTap(TapPosition tapPos, LatLng point) {
+    HapticFeedback.lightImpact();
     final tap = [point.longitude, point.latitude];
     // Seuil de sélection : ~15 m en degrés (~0.00014°)
-    const kThreshMock  = 2e-8;  // 0.00014² — segments vérifiés, seuil serré
-    const kThreshBulk  = 8e-8;  // 0.00028² — rues bulk, seuil plus large
+    const kThreshMock = 2e-8; // 0.00014² — segments vérifiés, seuil serré
+    const kThreshBulk = 8e-8; // 0.00028² — rues bulk, seuil plus large
 
     // ── 1. Segments mock : distance à la polyligne (pas au point) ────────
     StreetSegment? nearestSeg;
@@ -528,11 +623,17 @@ class _MapScreenState extends State<MapScreen>
       final coords = _geometryFor(seg);
       if (coords.length < 2) continue;
       final d = _distToPolyline2(tap, coords);
-      if (d < minSegDist) { minSegDist = d; nearestSeg = seg; }
+      if (d < minSegDist) {
+        minSegDist = d;
+        nearestSeg = seg;
+      }
     }
 
     if (nearestSeg != null && minSegDist < kThreshMock) {
-      setState(() { _selectedSegment = nearestSeg; _selectedBulkStreet = null; });
+      setState(() {
+        _selectedSegment = nearestSeg;
+        _selectedBulkStreet = null;
+      });
       return;
     }
 
@@ -544,27 +645,33 @@ class _MapScreenState extends State<MapScreen>
       if (street.city != _selectedCity.id) continue;
       if (street.coordinates.length < 2) continue;
       final d = _distToPolyline2(tap, street.coordinates);
-      if (d < minBulkDist) { minBulkDist = d; nearestBulk = street; }
+      if (d < minBulkDist) {
+        minBulkDist = d;
+        nearestBulk = street;
+      }
     }
 
     // Aucun segment mock assez proche (kThreshMock) — on choisit entre bulk
     // et segment mock élargi (kThreshBulk), en prenant le plus proche.
-    final segInBulkRange  = nearestSeg  != null && minSegDist  < kThreshBulk;
-    final bulkInRange     = nearestBulk != null && minBulkDist < kThreshBulk;
+    final segInBulkRange = nearestSeg != null && minSegDist < kThreshBulk;
+    final bulkInRange = nearestBulk != null && minBulkDist < kThreshBulk;
 
     if (!segInBulkRange && !bulkInRange) {
       // Tap dans le vide → fermer
-      setState(() { _selectedSegment = null; _selectedBulkStreet = null; });
+      setState(() {
+        _selectedSegment = null;
+        _selectedBulkStreet = null;
+      });
       return;
     }
 
     // Prend l'élément le plus proche (segment mock prioritaire à égalité)
-    final pickSeg = segInBulkRange &&
-        (!bulkInRange || minSegDist <= minBulkDist);
+    final pickSeg =
+        segInBulkRange && (!bulkInRange || minSegDist <= minBulkDist);
 
     setState(() {
-      _selectedSegment    = pickSeg ? nearestSeg  : null;
-      _selectedBulkStreet = pickSeg ? null        : nearestBulk;
+      _selectedSegment = pickSeg ? nearestSeg : null;
+      _selectedBulkStreet = pickSeg ? null : nearestBulk;
     });
   }
 
@@ -587,6 +694,33 @@ class _MapScreenState extends State<MapScreen>
     UserPreferencesService().setSelectedCity(city.id);
   }
 
+  void _onSavedSpotTap(SavedSpot spot) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _SavedSpotSheet(
+        spot: spot,
+        onDelete: () async {
+          if (spot.id != null) {
+            await SavedSpotService.instance.delete(spot.id!);
+            _loadSavedSpots();
+          }
+        },
+        onNavigate: () async {
+          final lat = spot.latitude;
+          final lon = spot.longitude;
+          final url = Uri.parse(
+            'https://www.google.com/maps/dir/?api=1&destination=$lat,$lon&travelmode=driving',
+          );
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          }
+        },
+      ),
+    );
+  }
+
   void _onTimeChanged(DateTime? t) {
     setState(() => _viewTime = t);
     UserPreferencesService().setViewTime(t);
@@ -602,7 +736,8 @@ class _MapScreenState extends State<MapScreen>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.mdPlus)),
     ));
   }
 
@@ -651,6 +786,7 @@ class _MapScreenState extends State<MapScreen>
 
   // ── GPS dot widget ───────────────────────────────────────────────────────
   Widget _buildGpsDot() {
+    final primaryColor = Theme.of(context).colorScheme.primary;
     return AnimatedBuilder(
       animation: _pulseAnim,
       builder: (_, __) => Stack(
@@ -661,17 +797,18 @@ class _MapScreenState extends State<MapScreen>
             height: _pulseAnim.value,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.blue.withAlpha(64),
+              color: primaryColor.withAlpha(64),
             ),
           ),
           Container(
-            width: 10, height: 10,
+            width: 10,
+            height: 10,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.blue,
+              color: primaryColor,
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
-                BoxShadow(color: Colors.blue.withAlpha(128), blurRadius: 6),
+                BoxShadow(color: primaryColor.withAlpha(128), blurRadius: 6),
               ],
             ),
           ),
@@ -685,10 +822,13 @@ class _MapScreenState extends State<MapScreen>
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(
-            color: Colors.black.withAlpha(31), blurRadius: 8,
-            offset: const Offset(0, 2))],
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withAlpha(31),
+              blurRadius: 8,
+              offset: const Offset(0, 2))
+        ],
       ),
       // Row simple (pas de ScrollView) : 2 boutons maximum → jamais d'overflow.
       // SingleChildScrollView(horizontal) dans un Row avec Spacer() cause une
@@ -705,15 +845,17 @@ class _MapScreenState extends State<MapScreen>
               onTap: () => _switchCity(city),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: sel ? AppTheme.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppRadius.xxl),
                 ),
                 child: Text(city.name,
                     style: TextStyle(
-                      color: sel ? Colors.white : AppTheme.primary,
-                      fontWeight: FontWeight.w700, fontSize: 13)),
+                        color: sel ? Colors.white : AppTheme.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: AppTextSize.md)),
               ),
             ),
           );
@@ -729,21 +871,24 @@ class _MapScreenState extends State<MapScreen>
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(
-            color: Colors.black.withAlpha(31), blurRadius: 10,
-            offset: const Offset(0, 2))],
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withAlpha(31),
+              blurRadius: 10,
+              offset: const Offset(0, 2))
+        ],
       ),
-      child: Column(
+      child: const Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(mainAxisSize: MainAxisSize.min, children: [
-            _LegendItem(color: AppTheme.free,       label: 'Libre'),
-            const SizedBox(width: 16),
-            _LegendItem(color: AppTheme.meter,      label: 'Parcom.'),
+            _LegendItem(color: AppTheme.free, label: 'Libre'),
+            SizedBox(width: 16),
+            _LegendItem(color: AppTheme.meter, label: 'Parcom.'),
           ]),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(mainAxisSize: MainAxisSize.min, children: [
             _LegendItem(color: AppTheme.restricted, label: 'Interdit'),
           ]),
@@ -754,28 +899,28 @@ class _MapScreenState extends State<MapScreen>
 
   @override
   Widget build(BuildContext context) {
-    final session  = context.watch<SessionService>();
-    final mq        = MediaQuery.of(context);
-    final isDark    = Theme.of(context).brightness == Brightness.dark;
+    final session = context.watch<SessionService>();
+    final mq = MediaQuery.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor: Theme.of(context).scaffoldBackgroundColor,
       systemNavigationBarIconBrightness:
           isDark ? Brightness.light : Brightness.dark,
     ));
-    final top       = mq.padding.top;
-    final navBar    = mq.padding.bottom;          // hauteur barre système Android
+    final top = mq.padding.top;
+    final navBar = mq.padding.bottom; // hauteur barre système Android
     final maxSheetH = mq.size.height * 0.60 - navBar;
-    final textScale = mq.textScaleFactor;
 
     // FABs + time pill : au-dessus de la stats bar (≈80px) + barre système
-    const statsBarH       = 76.0;
-    final fabBottom       = navBar + statsBarH + 16;
-    final timePillBottom  = navBar + statsBarH + 10;
+    const statsBarH = 76.0;
+    final fabBottom = navBar + statsBarH + 16;
 
     final sheetOpen = _selectedSegment != null || _selectedBulkStreet != null;
 
     return Scaffold(
-      extendBody: true,        // map fills edge-to-edge; mq.padding.bottom = nav bar height
+      extendBody:
+          true, // map fills edge-to-edge; mq.padding.bottom = nav bar height
+      bottomNavigationBar: const BannerAdWidget(),
       body: Stack(
         children: [
           // ── SKELETON LOADER (while geometry loads) ────────────────────────
@@ -787,41 +932,59 @@ class _MapScreenState extends State<MapScreen>
           // ── MAP — plein écran ─────────────────────────────────────────────
           if (!_loadingGeometry)
             FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: CityRegistry.defaultCity.center,
-              initialZoom: CityRegistry.defaultCity.defaultZoom,
-              onTap: _onMapTap,
-              onMapEvent: _onMapEvent,
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.all,
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: CityRegistry.defaultCity.center,
+                initialZoom: CityRegistry.defaultCity.defaultZoom,
+                onTap: _onMapTap,
+                onMapEvent: _onMapEvent,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all,
+                ),
               ),
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.parksmart.app',
-                maxZoom: 19,
-              ),
-              PolylineLayer(polylines: _buildBulkPolylines()),
-              PolylineLayer(polylines: _buildPolylines()),
-              if (_currentPosition != null)
-                MarkerLayer(markers: [
-                  Marker(
-                    point: _currentPosition!,
-                    width: 24, height: 24,
-                    child: _buildGpsDot(),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.parksmart.app',
+                  maxZoom: 19,
+                ),
+                PolylineLayer(polylines: _buildBulkPolylines()),
+                PolylineLayer(polylines: _buildPolylines()),
+                // Saved spot markers
+                if (_showSavedSpots && _savedSpots.isNotEmpty)
+                  MarkerLayer(
+                    markers: _savedSpots
+                        .map((s) => Marker(
+                              point: LatLng(s.latitude, s.longitude),
+                              width: 36,
+                              height: 36,
+                              child: _SavedSpotMarker(
+                                label: s.label,
+                                onTap: () => _onSavedSpotTap(s),
+                              ),
+                            ))
+                        .toList(),
                   ),
-                ]),
-            ],
-          )
+                if (_currentPosition != null)
+                  MarkerLayer(markers: [
+                    Marker(
+                      point: _currentPosition!,
+                      width: 24,
+                      height: 24,
+                      child: _buildGpsDot(),
+                    ),
+                  ]),
+              ],
+            )
           else
             const SizedBox.shrink(),
 
           // ── SESSION BANNER (repositioned higher to avoid FAB collision) ─
           if (session.hasActiveSession && !_bannerDismissed)
             Positioned(
-              top: top + 70, left: 12, right: 12,
+              top: top + 70,
+              left: 12,
+              right: 12,
               child: SessionAlertBanner(
                 session: session.activeSession!,
                 onDismiss: () => setState(() => _bannerDismissed = true),
@@ -829,77 +992,195 @@ class _MapScreenState extends State<MapScreen>
               ),
             ),
 
+          // ── SEARCH BAR (shown when _searchOpen) ──────────────────────────
+          if (_searchOpen)
+            Positioned(
+              top: top + 8,
+              left: 12,
+              right: 12,
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SearchBarWidget(
+                            onSearch: _searchAddress,
+                            onClear: () => setState(() {}),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _Fab(
+                          icon: Icons.close_rounded,
+                          onTap: () => setState(() => _searchOpen = false),
+                        ),
+                      ],
+                    ),
+                    if (_searchLoading) ...[
+                      const SizedBox(height: 8),
+                      const LinearProgressIndicator(),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
           // ── TOP OVERLAY ──────────────────────────────────────────────────
-          Positioned(
-            top: top + 8, left: 12, right: 12,
-            child: CalcwisePageEntrance(child: Opacity(
-              opacity: sheetOpen ? 0.7 : 1.0,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildCitySwitcher(),
-                  const Spacer(),
-                  _buildLegend(),
-                  const SizedBox(width: 6),
-                  Builder(
-                    builder: (ctx) {
-                      final surfaceColor = Theme.of(ctx).colorScheme.surface;
-                      final iconColor = Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6);
-                      return ValueListenableBuilder<ThemeMode>(
-                        valueListenable: themeModeService.notifier,
-                        builder: (_, __, ___) => Material(
+          if (!_searchOpen)
+            Positioned(
+              top: top + 8,
+              left: 12,
+              right: 12,
+              child: CalcwisePageEntrance(
+                  child: Opacity(
+                opacity: sheetOpen ? 0.7 : 1.0,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildCitySwitcher(),
+                    const Spacer(),
+                    _buildLegend(),
+                    const SizedBox(width: 6),
+                    Builder(
+                      builder: (ctx) {
+                        final surfaceColor = Theme.of(ctx).colorScheme.surface;
+                        final iconColor = Theme.of(ctx)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6);
+                        return ValueListenableBuilder<ThemeMode>(
+                          valueListenable: themeModeService.notifier,
+                          builder: (_, __, ___) => Tooltip(
+                            message: 'Toggle theme',
+                            child: Semantics(
+                              label: 'Toggle dark/light mode',
+                              button: true,
+                              child: Material(
+                                color: surfaceColor,
+                                shape: const CircleBorder(),
+                                elevation: 0,
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => themeModeService.toggle(),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6),
+                                    child: Icon(themeModeService.icon,
+                                        size: 20, color: iconColor),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    // Premium badge
+                    ValueListenableBuilder<bool>(
+                      valueListenable: freemiumService.isPremiumNotifier,
+                      builder: (ctx, isPremium, __) {
+                        final surfaceColor = Theme.of(ctx).colorScheme.surface;
+                        return Material(
                           color: surfaceColor,
                           shape: const CircleBorder(),
-                          elevation: 2,
+                          elevation: 0,
                           child: InkWell(
                             customBorder: const CircleBorder(),
-                            onTap: () => themeModeService.toggle(),
+                            onTap:
+                                isPremium ? null : () => PaywallSoft.show(ctx),
                             child: Padding(
                               padding: const EdgeInsets.all(6),
-                              child: Icon(themeModeService.icon, size: 20, color: iconColor),
+                              child: isPremium
+                                  ? const Tooltip(
+                                      message: 'Premium active',
+                                      child: Icon(Icons.verified_rounded,
+                                          color: AppTheme.primary, size: 20),
+                                    )
+                                  : const Tooltip(
+                                      message: 'Go Premium',
+                                      child: Icon(Icons.workspace_premium,
+                                          color: AppTheme.primary, size: 20),
+                                    ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 6),
-                  Builder(
-                    builder: (ctx) {
-                      final surfaceColor = Theme.of(ctx).colorScheme.surface;
-                      final iconColor = Theme.of(ctx).colorScheme.onSurface.withOpacity(0.6);
-                      return Material(
-                        color: surfaceColor,
-                        shape: const CircleBorder(),
-                        elevation: 2,
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => Navigator.push(
-                            ctx,
-                            MaterialPageRoute(
-                              builder: (_) => const SettingsScreen(),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    Builder(
+                      builder: (ctx) {
+                        final surfaceColor = Theme.of(ctx).colorScheme.surface;
+                        final iconColor = Theme.of(ctx)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6);
+                        return Tooltip(
+                          message: 'Settings',
+                          child: Semantics(
+                            label: 'Open settings',
+                            button: true,
+                            child: Material(
+                              color: surfaceColor,
+                              shape: const CircleBorder(),
+                              elevation: 0,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => Navigator.push(
+                                  ctx,
+                                  PageRouteBuilder(
+                                    pageBuilder: (_, __, ___) =>
+                                        const SettingsScreen(),
+                                    transitionsBuilder: (_, anim, __, child) =>
+                                        FadeTransition(
+                                            opacity: anim, child: child),
+                                    transitionDuration: AppDuration.base,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(6),
+                                  child: Icon(Icons.settings_rounded,
+                                      size: 20, color: iconColor),
+                                ),
+                              ),
                             ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(6),
-                            child: Icon(Icons.settings_outlined, size: 20, color: iconColor),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            )),
-          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              )),
+            ),
 
           // ── RIGHT FABs ───────────────────────────────────────────────────
-          if (!sheetOpen)
+          if (!sheetOpen && !_searchOpen)
             Positioned(
-              right: 12, bottom: fabBottom,
+              right: 12,
+              bottom: fabBottom,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Search address
+                  Tooltip(
+                    message: 'Chercher une adresse',
+                    child: _Fab(
+                      icon: Icons.search_rounded,
+                      onTap: () => setState(() => _searchOpen = true),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Save current parking spot
+                  Tooltip(
+                    message: 'Sauvegarder ma position',
+                    child: _Fab(
+                      icon: Icons.bookmark_add_rounded,
+                      onTap: _saveCurrentSpot,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // GPS
                   Tooltip(
                     message: 'Aller à ma position',
                     child: Semantics(
@@ -910,9 +1191,13 @@ class _MapScreenState extends State<MapScreen>
                     ),
                   ),
                   const SizedBox(height: 10),
-                  LayerFilterWidget(
-                    filters: _filters,
-                    onFiltersChanged: _onFiltersChanged,
+                  // Layer filter
+                  Tooltip(
+                    message: 'Changer de vue',
+                    child: LayerFilterWidget(
+                      filters: _filters,
+                      onFiltersChanged: _onFiltersChanged,
+                    ),
                   ),
                 ],
               ),
@@ -933,29 +1218,47 @@ class _MapScreenState extends State<MapScreen>
           // bottom: navBar → le widget commence AU-DESSUS de la barre système.
           // Ni SafeArea ni padding.bottom interne nécessaires.
           Positioned(
-            bottom: navBar, left: 0, right: 0,
-            child: sheetOpen
-                ? ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: maxSheetH),
-                    child: _selectedSegment != null
-                        ? SegmentBottomSheet(
-                            segment: _selectedSegment!,
-                            viewTime: _effectiveTime,
-                            onClose: () =>
-                                setState(() => _selectedSegment = null),
-                          )
-                        : SegmentBottomSheet(
-                            segment:
-                                _syntheticSegmentFor(_selectedBulkStreet!),
-                            viewTime: _effectiveTime,
-                            onClose: () =>
-                                setState(() => _selectedBulkStreet = null),
-                          ),
-                  )
-                : _StatsBar(
-                    allSegments: _allSegments,
-                    effectiveTime: _effectiveTime,
-                  ),
+            bottom: navBar,
+            left: 0,
+            right: 0,
+            child: AnimatedSwitcher(
+              duration: AppDuration.base,
+              transitionBuilder: (child, anim) => SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+                child: child,
+              ),
+              child: sheetOpen
+                  ? KeyedSubtree(
+                      key: const ValueKey('sheet'),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: maxSheetH),
+                        child: _selectedSegment != null
+                            ? SegmentBottomSheet(
+                                segment: _selectedSegment!,
+                                viewTime: _effectiveTime,
+                                onClose: () =>
+                                    setState(() => _selectedSegment = null),
+                              )
+                            : SegmentBottomSheet(
+                                segment:
+                                    _syntheticSegmentFor(_selectedBulkStreet!),
+                                viewTime: _effectiveTime,
+                                onClose: () =>
+                                    setState(() => _selectedBulkStreet = null),
+                              ),
+                      ),
+                    )
+                  : KeyedSubtree(
+                      key: const ValueKey('stats'),
+                      child: _StatsBar(
+                        allSegments: _allSegments,
+                        effectiveTime: _effectiveTime,
+                      ),
+                    ),
+            ),
           ),
         ],
       ),
@@ -974,13 +1277,17 @@ class _Fab extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 48, height: 48,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(
-              color: Colors.black.withAlpha(31),
-              blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withAlpha(31),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
+          ],
         ),
         child: Icon(icon, color: AppTheme.primary, size: 22),
       ),
@@ -1002,10 +1309,17 @@ class _StatsBar extends StatelessWidget {
     int free = 0, restricted = 0, meter = 0;
     for (final seg in allSegments) {
       switch (RuleEngine.evaluate(seg, effectiveTime).color) {
-        case ParkingColor.free:       free++;       break;
-        case ParkingColor.restricted: restricted++; break;
-        case ParkingColor.meter:      meter++;      break;
-        case ParkingColor.noData:     break;
+        case ParkingColor.free:
+          free++;
+          break;
+        case ParkingColor.restricted:
+          restricted++;
+          break;
+        case ParkingColor.meter:
+          meter++;
+          break;
+        case ParkingColor.noData:
+          break;
       }
     }
     return Container(
@@ -1013,19 +1327,23 @@ class _StatsBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(
-            color: Colors.black.withAlpha(26),
-            blurRadius: 12, offset: const Offset(0, -2))],
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withAlpha(26),
+              blurRadius: 12,
+              offset: const Offset(0, -2))
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _Stat(count: free,        color: AppTheme.free,       label: 'Libres'),
+          _Stat(count: free, color: AppTheme.free, label: 'Libres'),
           _Divider(),
-          _Stat(count: meter,       color: AppTheme.meter,      label: 'Parcom.'),
+          _Stat(count: meter, color: AppTheme.meter, label: 'Parcom.'),
           _Divider(),
-          _Stat(count: restricted,  color: AppTheme.restricted, label: 'Interdit'),
+          _Stat(
+              count: restricted, color: AppTheme.restricted, label: 'Interdit'),
         ],
       ),
     );
@@ -1040,25 +1358,29 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text('$count',
-          style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 20, color: color)),
-      Text(label,
-          style: TextStyle(
-              fontSize: 11,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
-              fontWeight: FontWeight.w500)),
-    ],
-  );
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$count',
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: AppTextSize.title,
+                  color: color)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: AppTextSize.xs,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.55),
+                  fontWeight: FontWeight.w500)),
+        ],
+      );
 }
 
 class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
-      Container(width: 1, height: 32,
-          color: Theme.of(context).dividerColor);
+      Container(width: 1, height: 32, color: Theme.of(context).dividerColor);
 }
 
 // ── Legend item (dot + label) ─────────────────────────────────────────────────
@@ -1069,17 +1391,183 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
-        width: 10, height: 10,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(label,
+              style: TextStyle(
+                  fontSize: AppTextSize.md,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface)),
+        ],
+      );
+}
+
+// ── Saved Spot pin marker ─────────────────────────────────────────────────────
+class _SavedSpotMarker extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _SavedSpotMarker({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: AppTheme.primary,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primary.withAlpha(102),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.local_parking, color: Colors.white, size: 20),
       ),
-      const SizedBox(width: 6),
-      Text(label,
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface)),
-    ],
-  );
+    );
+  }
+}
+
+// ── Saved Spot bottom sheet ───────────────────────────────────────────────────
+class _SavedSpotSheet extends StatelessWidget {
+  final SavedSpot spot;
+  final VoidCallback onDelete;
+  final VoidCallback onNavigate;
+
+  const _SavedSpotSheet({
+    required this.spot,
+    required this.onDelete,
+    required this.onNavigate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        MediaQuery.of(context).padding.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withAlpha(26),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.local_parking,
+                    color: AppTheme.primary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      spot.label,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: AppTextSize.bodyLg),
+                    ),
+                    Text(
+                      'Sauvegardé le ${_formatDate(spot.savedAt)}',
+                      style: TextStyle(
+                        fontSize: AppTextSize.sm,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    onNavigate();
+                  },
+                  icon: const Icon(Icons.directions_rounded),
+                  label: const Text('Naviguer'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  onDelete();
+                },
+                icon: const Icon(Icons.delete_outline,
+                    color: AppTheme.restricted),
+                label: const Text('Supprimer',
+                    style: TextStyle(color: AppTheme.restricted)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppTheme.restricted),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso);
+      return '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return iso;
+    }
+  }
 }

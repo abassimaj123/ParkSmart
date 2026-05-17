@@ -5,16 +5,16 @@ class OfferResult {
   final double stateTax;
   final double ficaTax;
   final double totalTax;
-  final double effectiveTaxRate;    // %
-  final double netTakeHome;         // after-tax salary only
+  final double effectiveTaxRate; // %
+  final double netTakeHome; // after-tax salary only
   final double annualBonus;
   final double bonusAfterTax;
-  final double k401kMatch;          // annual employer match $
-  final double healthBenefits;      // health + dental/vision savings
-  final double ptoValue;            // $ value of PTO days
+  final double k401kMatch; // annual employer match $
+  final double healthBenefits; // health + dental/vision savings
+  final double ptoValue; // $ value of PTO days
   final double annualRsuValue;
-  final double commuteCost;         // annual cost (gas + wear)
-  final double totalCompensation;   // all-in net annual value
+  final double commuteCost; // annual cost (gas + wear)
+  final double totalCompensation; // all-in net annual value
   final double colAdjustedTakeHome; // purchasing-power adjusted (premium)
   final List<double> fiveYearProjection; // year 1–5 total comp (premium)
 
@@ -49,7 +49,8 @@ class ComparisonResult {
   final OfferResult resultB;
   final Winner winner;
   final double annualAdvantage; // absolute $ difference (winner vs loser)
-  final Map<String, Winner> categoryWinners; // 'takeHome','bonus','benefits','pto','rsu','commute','col'
+  final Map<String, Winner>
+      categoryWinners; // 'takeHome','bonus','benefits','pto','rsu','commute','col'
 
   const ComparisonResult({
     required this.resultA,
@@ -62,6 +63,5 @@ class ComparisonResult {
   bool get isTie => winner == Winner.tie;
 
   /// Which OfferResult won?
-  OfferResult get winnerResult =>
-      winner == Winner.offerA ? resultA : resultB;
+  OfferResult get winnerResult => winner == Winner.offerA ? resultA : resultB;
 }
