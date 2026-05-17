@@ -7,7 +7,7 @@ import 'package:parksmart/core/utils/quebec_holidays.dart';
 void main() {
   group('RuleEngine — Core logic', () {
     test('Empty rules → free (green)', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-001',
         streetName: 'Test Street',
         city: 'Québec',
@@ -23,14 +23,14 @@ void main() {
     });
 
     test('No parking rule active → restricted', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-002',
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5],
             from: '07:00',
@@ -47,14 +47,14 @@ void main() {
     });
 
     test('No parking outside hours → free', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-003',
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5],
             from: '07:00',
@@ -71,14 +71,14 @@ void main() {
     });
 
     test('Meter rule → meter color', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-004',
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.meter,
             days: [1, 2, 3, 4, 5, 6, 7],
             from: '08:00',
@@ -97,20 +97,20 @@ void main() {
     });
 
     test('noParking priority over meter', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-005',
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5],
             from: '07:00',
             to: '09:00',
           ),
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.meter,
             days: [1, 2, 3, 4, 5, 6, 7],
             from: '07:00',
@@ -127,14 +127,14 @@ void main() {
     });
 
     test('Overnight permit rule applies at midnight', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-006',
         streetName: 'Test Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.permitOnly,
             days: [1, 2, 3, 4, 5, 6, 7],
             from: '22:00',
@@ -155,14 +155,14 @@ void main() {
 
   group('RuleEngine — Seasonal rules', () {
     test('Seasonal rule within range', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-season-001',
         streetName: 'Winter Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5, 6, 7],
             monthFrom: 11,
@@ -180,14 +180,14 @@ void main() {
     });
 
     test('Seasonal rule outside range', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-season-002',
         streetName: 'Winter Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5, 6, 7],
             monthFrom: 11,
@@ -205,14 +205,14 @@ void main() {
     });
 
     test('Seasonal rule with wrap (Nov→Apr)', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-season-003',
         streetName: 'Winter Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5, 6, 7],
             monthFrom: 11,
@@ -240,14 +240,14 @@ void main() {
 
   group('RuleEngine — Parity rules (alternating)', () {
     test('Day parity: odd days only', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-parity-001',
         streetName: 'Odd Street',
         city: 'Montréal',
         side: 'Nord',
         coordinates: [[-73.5, 45.5], [-73.49, 45.5]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5, 6, 7],
             dayParity: 1, // odd days: 1,3,5,7...
@@ -267,14 +267,14 @@ void main() {
     });
 
     test('Month parity: odd months only', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-parity-002',
         streetName: 'Odd Month Street',
         city: 'Montréal',
         side: 'Sud',
         coordinates: [[-73.5, 45.5], [-73.49, 45.5]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5, 6, 7],
             monthParity: 1, // odd months: Jan, Mar, May, Jul...
@@ -304,14 +304,14 @@ void main() {
       final isHoliday = QuebecHolidays.isHoliday(victoriaDay);
       expect(isHoliday, true);
 
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-holiday-001',
         streetName: 'Holiday Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.meter,
             days: [1, 2, 3, 4, 5, 6, 7],
             from: '08:00',
@@ -331,14 +331,14 @@ void main() {
 
   group('RuleEngine — Rule types and hierarchy', () {
     test('PermitOrLimit → free (2h max)', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-types-001',
         streetName: 'Permit Limited Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.permitOrLimit,
             days: [1, 2, 3, 4, 5, 6, 7],
             maxMinutes: 120,
@@ -354,19 +354,19 @@ void main() {
     });
 
     test('Permit priority over meter', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-types-002',
         streetName: 'Permit Priority Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.permitOnly,
             days: [1, 2, 3, 4, 5, 6, 7],
             permitZone: 'C-1',
           ),
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.meter,
             days: [1, 2, 3, 4, 5, 6, 7],
             from: '08:00',
@@ -413,27 +413,27 @@ void main() {
 
   group('RuleEngine — Edge cases', () {
     test('Multiple conflicting rules: noParking wins', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-edge-001',
         streetName: 'Conflict Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.free,
             days: [1],
             from: '10:00',
             to: '15:00',
           ),
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.meter,
             days: [1],
             from: '10:00',
             to: '15:00',
             ratePerHour: 2.0,
           ),
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1],
             from: '10:00',
@@ -450,14 +450,14 @@ void main() {
     });
 
     test('Day of week filtering', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-edge-002',
         streetName: 'Weekday Only Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5], // Mon-Fri only
             from: '07:00',
@@ -480,14 +480,14 @@ void main() {
     });
 
     test('Midnight boundary condition', () {
-      final seg = StreetSegment(
+      const seg = StreetSegment(
         id: 'test-edge-003',
         streetName: 'Midnight Street',
         city: 'Québec',
         side: 'Nord',
         coordinates: [[-71.22, 46.81], [-71.21, 46.81]],
         rules: [
-          const ParkingRule(
+          ParkingRule(
             type: RuleType.noParking,
             days: [1, 2, 3, 4, 5],
             from: '18:00',
